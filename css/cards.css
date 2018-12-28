@@ -8,10 +8,10 @@
     color: #4C61FE;
 }
 .task {
-    border-left: 4px solid #4C61FE;
+    border-left: 4px solid #FFD400;
 }
 .task .type, .task .id {
-    color: #4C61FE;
+    color: #5D4E00;
 }
 .non-product-user-story {
     border-left: 4px solid #46237A;
