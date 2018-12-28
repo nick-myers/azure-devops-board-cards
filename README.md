@@ -1,6 +1,8 @@
 # azure-devops-board-cards
 Azure DevOps Extension for printing work items to place on physical boards
 
+https://marketplace.visualstudio.com/items?itemName=NickMyers.board-cards
+
 ## Overview
 
 This is a very simple Azure DevOps extension which adds a "Print" tab to Sprint boards, which displays all the work items in @currentIteration and triggers the browsers print dailog.
