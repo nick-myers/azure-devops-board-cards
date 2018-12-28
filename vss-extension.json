@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "board-cards",
     "publisher": "NickMyers",
-    "version": "1.0.115",
+    "version": "1.0.116",
     "name": "Board Cards",
     "description": "Generates cards for information radiators",
     "public": false,
