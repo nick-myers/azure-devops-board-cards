@@ -16,6 +16,11 @@
     "icons": {
         "default": "images/board-cards.png"
     },
+    "content": {
+        "details": {
+            "path": "overview.md"
+        }
+    },
     "contributions": [
         {
             "id": "board-cards",
