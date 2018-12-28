@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "board-cards",
     "publisher": "NickMyers",
-    "version": "1.0.116",
+    "version": "1.0.117",
     "name": "Board Cards",
     "description": "Generates cards for information radiators",
     "public": false,
@@ -62,6 +62,10 @@
             "path": "node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
             "packagePath": "lib"
+        },
+        {
+            "path": "images",
+            "addressable": true
         }
     ]
 }
