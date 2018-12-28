@@ -1,0 +1,33 @@
+.workItem {
+    border: 0.5px dashed grey;
+}
+.user-story {
+    border-left: 4px solid #4C61FE;
+}
+.user-story .type, .user-story .id {
+    color: #4C61FE;
+}
+.task {
+    border-left: 4px solid #4C61FE;
+}
+.task .type, .task .id {
+    color: #4C61FE;
+}
+.non-product-user-story {
+    border-left: 4px solid #46237A;
+}
+.non-product-user-story .type, .non-product-user-story .id {
+    color: #46237A;
+}
+.retrospective-action {
+    border-left: 4px solid #3DDC97;
+}
+.retrospective-action .type, .retrospective-action .id {
+    color: #3DDC97;
+}
+.bug {
+    border-left: 4px solid #FF495C;
+}
+.bug .type, .bug .id {
+    color: #FF495C;
+}

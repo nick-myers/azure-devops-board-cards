@@ -1,0 +1,59 @@
+{
+    "manifestVersion": 1,
+    "id": "board-cards",
+    "publisher": "NickMyers",
+    "version": "1.0.113",
+    "name": "Board Cards",
+    "description": "Generates cards for information radiators",
+    "public": false,
+    "categories": ["Azure Boards"],
+    "scopes": ["vso.work"],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "board-cards",
+            "type": "ms.vss-web.tab",
+            "description": "Print",
+            "targets": [
+                "ms.vss-work-web.iteration-backlog-tabs"
+            ],
+            "properties": {
+                "text": "Print",
+                "title": "Print",
+                "name": "Print",
+                "uri": "board-cards.html",
+                "registeredObjectId": "board-cards"
+            }
+        }
+    ],
+    "files": [
+        {
+            "path": "board-cards.html",
+            "addressable": true
+        },
+        {
+            "path": "css/print.css",
+            "contentType": "text/css",
+            "addressable": true
+        },
+        {
+            "path": "css/cards.css",
+            "contentType": "text/css",
+            "addressable": true
+        },
+        {
+            "path": "css/screen.css",
+            "contentType": "text/css",
+            "addressable": true
+        },
+        {
+            "path": "node_modules/vss-web-extension-sdk/lib",
+            "addressable": true,
+            "packagePath": "lib"
+        }
+    ]
+}

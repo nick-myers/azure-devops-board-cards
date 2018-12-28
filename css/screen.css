@@ -1,0 +1,23 @@
+body.board-cards {
+    overflow: auto;
+}
+.workItem {
+    width: 33%;
+    height:170px;
+    padding: 4px;
+    margin: 2px;
+    float: left;
+    overflow: hidden;
+    padding-top: 2px;
+}
+div.type {
+    float: left;
+}
+div.id {
+    float:right; 
+}
+div.title {
+    clear: both;
+    margin: 10px;
+    padding-top: 10px;
+}

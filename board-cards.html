@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="lib/VSS.SDK.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            usePlatformScripts: true, 
+            usePlatformStyles: true
+        });
+        VSS.register("backlogTabObject", {
+                pageTitle: function(state) {
+                    return "Print board cards";
+                },
+                updateContext: function(tabContext) {                            
+                },
+                isInvisible: function(state) {
+                    return false;
+                },
+                isDisabled: function(state) {
+                    return false;
+                }
+            });
+        VSS.ready(function () {
+            VSS.require([
+                "VSS/Service",
+                "TFS/WorkItemTracking/RestClient"
+                ], function (VSS_Service, TFS_WorkItemTracking_RestClient) {
+                    var client = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient); 
+                    var query = {'query': 'SELECT [System.Id] FROM WorkItems WHERE [System.IterationPath] = @CurrentIteration'};
+                    var context = VSS.getWebContext();
+                    var projectId = context.project.id;
+                    return client.queryByWiql(query, projectId).then(function(result) {
+                        var workItemIds = [];
+                        workItemIds = result.workItems.map(val => val.id);
+                        var workItemDetails = client.getWorkItems(workItemIds).then(function(workItems) {
+                            for(var x = 0; x < workItems.length; x++) {
+                                let id = workItems[x].id;
+                                let title = workItems[x].fields['System.Title'];
+                                let type = workItems[x].fields['System.WorkItemType'];
+                                let styleType = type.replace(/\s+/g, '-').toLowerCase();
+                                let div = document.createElement('div');
+                                let className = 'workItem ' + styleType + ' ' + id;
+                                div.className = className;
+                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div>';
+                                document.getElementById("main").appendChild(div);
+                            }
+                            window.focus();
+                            window.print();
+                        }); 
+                    });
+                }
+            );
+        });
+            VSS.notifyLoadSucceeded();
+    </script>
+    <link rel="stylesheet" media="all" href="css/cards.css">
+    <link rel="stylesheet" media="screen" href="css/screen.css">
+    <link rel="stylesheet" media="print" href="css/print.css">
+</head>
+<body class="board-cards">
+    <main id="main">
+
+    </main>
+</body>
+</html>
