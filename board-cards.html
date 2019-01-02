@@ -47,7 +47,12 @@
                                 document.getElementById("main").appendChild(div);
                             }
                             window.focus();
-                            window.print();
+                            if (confirm('Print?')) {
+                                    window.print();
+                                } else {
+                                    // Do nothing!
+                                }
+                            
                         }); 
                     });
                 }

@@ -31,3 +31,9 @@
 .bug .type, .bug .id {
     color: #FF495C;
 }
+.support-request {
+    border-left: 4px solid limegreen;
+}
+.support-request .type, .support-request .id {
+    color: limegreen;
+}
