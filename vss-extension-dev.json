@@ -1,11 +1,11 @@
 {
     "manifestVersion": 1,
-    "id": "board-cards",
+    "id": "board-cards-dev",
     "publisher": "NickMyers",
     "version": "1.1.9",
-    "name": "Board cards for printing",
+    "name": "(DEV) Board cards for printing",
     "description": "Adds a 'Print' tab to Sprint boards, which displays all the work items in @currentIteration and triggers the browsers print dailog.",
-    "public": true,
+    "public": false,
     "categories": ["Azure Boards"],
     "scopes": ["vso.work"],
     "targets": [
