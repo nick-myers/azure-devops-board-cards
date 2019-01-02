@@ -47,10 +47,15 @@
                                 document.getElementById("main").appendChild(div);
                             }
                             window.focus();
-                            if (confirm('Print?')) {
+                            if (confirm('Would you like print board cards now?')) {
                                     window.print();
                                 } else {
-                                    // Do nothing!
+                                    VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
+                                        // Get all document under the collection
+                                        dataService.getDocuments("board-cards-collection").then(function(docs) {
+                                            console.log("There are " + docs.length + " in the board-cards-collection.");
+                                        });
+                                    });
                                 }
                             
                         }); 
