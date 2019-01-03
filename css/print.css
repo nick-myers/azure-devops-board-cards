@@ -29,4 +29,7 @@
         margin: 10px;
         padding-top: 10px;
     }
+    div#config {
+        display: none;
+    }
   }

@@ -21,3 +21,9 @@ div.title {
     margin: 10px;
     padding-top: 10px;
 }
+div#config {
+    margin: 20px;
+    padding: 15px;
+    border: 1px solid black;
+    background-color: WhiteSmoke;
+}
