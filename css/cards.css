@@ -37,3 +37,23 @@
 .support-request .type, .support-request .id {
     color: limegreen;
 }
+.development-team-user-story {
+    border-left: 4px solid goldenrod;
+}
+.development-team-user-story .type, .development-team-user-story .id {
+    color: goldenrod;
+}
+.continuous-improvement-actions {
+    border-left: 4px solid #3DDC97;
+}
+.continuous-improvement-actions .type, .continuous-improvement-actions .id {
+    color: #3DDC97;
+}
+
+.feature {
+    border-left: 4px solid blueviolet;
+}
+
+.feature .type, .feature .id {
+    color: blueviolet;
+}

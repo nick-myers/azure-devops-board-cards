@@ -25,25 +25,42 @@
         VSS.ready(function () {
             VSS.require([
                 "VSS/Service",
-                "TFS/WorkItemTracking/RestClient"
-                ], function (VSS_Service, TFS_WorkItemTracking_RestClient) {
+                "TFS/WorkItemTracking/RestClient",
+                "TFS/WorkItemTracking/Contracts"
+                ], function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts) {
                     var client = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient); 
                     var query = {'query': 'SELECT [System.Id] FROM WorkItems WHERE [System.IterationPath] = @CurrentIteration'};
                     var context = VSS.getWebContext();
                     var projectId = context.project.id;
+                    var project = context.project.name;
+                    console.log('#1 - Querying for all work items in current iteration');
                     return client.queryByWiql(query, projectId).then(function(result) {
                         var workItemIds = [];
                         workItemIds = result.workItems.map(val => val.id);
-                        var workItemDetails = client.getWorkItems(workItemIds).then(function(workItems) {
+                        console.log('#2 - Querying for work items returned');
+                        var workItemDetails = client.getWorkItems(workItemIds,undefined,undefined,4).then(function(workItems) {
                             for(var x = 0; x < workItems.length; x++) {
                                 let id = workItems[x].id;
                                 let title = workItems[x].fields['System.Title'];
                                 let type = workItems[x].fields['System.WorkItemType'];
+                                if (workItems[x].relations) {
+                                    workItems[x].relations.forEach(function (relation) {
+                                        if (relation.rel === 'System.LinkTypes.Hierarchy-Reverse') {
+                                            let parentId = relation.url.split('/').slice(-1)[0];
+                                            console.log('Calling getWorkItem() with: ' + parentId);
+                                            let parentItemDetails = client.getWorkItem(parentId);
+                                            console.log(parentItemDetails);
+                                            //let parentTitle = parentItemDetails.fields['System.Title'];
+                                            //console.log(parentId);
+                                            //console.log(parentTitle);
+                                        }
+                                    })
+                                }
                                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
                                 let div = document.createElement('div');
                                 let className = 'workItem ' + styleType + ' ' + id;
                                 div.className = className;
-                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div>';
+                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"></div><div class="parent-name"></div>';
                                 document.getElementById("main").appendChild(div);
                             }
                             window.focus();
