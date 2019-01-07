@@ -63,3 +63,11 @@
 .feature .type, .feature .id {
     color: blueviolet;
 }
+
+.spike {
+    border-left: 4px solid maroon;
+}
+
+.spike .type, .spike .id {
+    color: maroon;
+}
