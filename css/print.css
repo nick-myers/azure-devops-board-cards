@@ -29,7 +29,7 @@
         margin: 10px;
         padding-top: 10px;
     }
-    div#config {
+    div#config, h1 {
         display: none;
     }
   }

@@ -57,3 +57,18 @@
 .feature .type, .feature .id {
     color: blueviolet;
 }
+
+.epic {
+    border-left: 4px solid teal;
+}
+
+.epic .type, .epic .id {
+    color: teal;
+}
+
+.issue {
+    border-left: 4px solid firebrick;
+}
+.issue .type, .issue .id {
+    color: firebrick;
+}
