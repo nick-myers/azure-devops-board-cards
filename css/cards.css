@@ -72,3 +72,11 @@
 .issue .type, .issue .id {
     color: firebrick;
 }
+
+.spike {
+    border-left: 4px solid maroon;
+}
+
+.spike .type, .spike .id {
+    color: maroon;
+}
