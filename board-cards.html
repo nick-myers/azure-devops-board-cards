@@ -10,20 +10,63 @@
             usePlatformStyles: true
         });
         VSS.register("backlogTabObject", {
-                pageTitle: function(state) {
-                    return "Print board cards";
-                },
-                updateContext: function(tabContext) {                            
-                },
-                isInvisible: function(state) {
-                    return false;
-                },
-                isDisabled: function(state) {
-                    return false;
-                }
+            pageTitle: function(state) {
+                return "Print board cards";
+            },
+            updateContext: function(tabContext) {                            
+            },
+            isInvisible: function(state) {
+                return false;
+            },
+            isDisabled: function(state) {
+                return false;
+            }
+        });
+        function configure() {
+            VSS.getService(VSS.ServiceIds.Dialog).then(function(dialogService) {
+                var configurationForm;
+                var extensionCtx = VSS.getExtensionContext();
+                var contributionId = extensionCtx.publisherId + "." + extensionCtx.extensionId + ".configuration";
+                var dialogOptions = {
+                    title: "Configuration options",
+                    width: 800,
+                    height: 600,
+                    getDialogResult: function() {
+                        // Get the result from configurationForm object
+                        return configurationForm ? configurationForm.getFormData() : null;
+                    },
+                    okCallback: function (result) {
+                        // Log the result to the console
+                        console.log(JSON.stringify(result));
+                    }
+                };
+                dialogService.openDialog(contributionId, dialogOptions).then(function(dialog) {
+                    // Get configurationForm instance which is registered in configurationForm.html
+                    dialog.getContributionInstance("configuration").then(function (configurationFormInstance) {
+
+                        // Keep a reference of registration form instance (to be used above in dialog options)
+                        configurationForm = configurationFormInstance;
+
+                        // Subscribe to form input changes and update the Ok enabled state
+                        configurationForm.attachFormChanged(function(isValid) {
+                            dialog.updateOkButton(isValid);
+                        });
+
+                        // Set the initial ok enabled state
+                        configurationForm.isFormValid().then(function (isValid) {
+                            dialog.updateOkButton(isValid);
+                        });
+                    });                            
+                });
+
             });
+        }
         VSS.ready(function () {
             console.log('VSS has said it is ready. Here we go ');
+                document.getElementById("configureButton").addEventListener("click", function(event){
+                configure();
+                event.preventDefault();
+            });
             VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
                 var collection = 'board-cards-ext-collection';
                 var configDoc = 'board-cards-config';
@@ -31,6 +74,7 @@
                     // document exists
                     console.log("Configuration document exists.  Content follows:");
                     console.log(doc);
+                    /*
                     for (var key in doc) {
                         if (doc.hasOwnProperty(key)) {
                             if(key == 'id') {
@@ -46,7 +90,7 @@
                                 console.log(key + " -> " + doc[key]);
                             }
                         }
-                    }
+                    } */
                 },function(err) {
                     // console.log(err)
                     if(err.status == '404') {
@@ -121,7 +165,7 @@
                 }
             );
         });
-            VSS.notifyLoadSucceeded();
+        VSS.notifyLoadSucceeded();
     </script>
     <link rel="stylesheet" media="all" href="css/cards.css">
     <link rel="stylesheet" media="screen" href="css/screen.css">
@@ -129,10 +173,10 @@
 </head>
 <body class="board-cards">
     <main id="main">
-        <h1>Print board cards, Azure DevOps extension</h1>
+        <h1>Print board cards</h1>
         <form id="config-form">
             <div id="config">
-                <h2>Work item configuration</h2>
+                    <button id="configureButton">Configure extension</button>
             </div>
         </form>
     </main>
