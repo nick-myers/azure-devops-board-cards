@@ -7,6 +7,12 @@
 .user-story .type, .user-story .id {
     color: #4C61FE;
 }
+.product-backlog-item {
+    border-left: 4px solid #4C61FE;
+}
+.product-backlog-item .type, .product-backlog-item .id {
+    color: #4C61FE;
+}
 .task {
     border-left: 4px solid #FFD400;
 }
