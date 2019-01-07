@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "board-cards",
     "publisher": "NickMyers",
-    "version": "1.1.10",
+    "version": "1.1.12",
     "name": "Board cards for printing",
     "description": "Adds a 'Print' tab to Sprint boards, which displays all the work items in @currentIteration and triggers the browsers print dailog.",
     "public": true,

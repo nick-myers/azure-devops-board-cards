@@ -64,45 +64,7 @@
                                 document.getElementById("main").appendChild(div);
                             }
                             window.focus();
-                            if (confirm('Would you like print board cards now?')) {
-                                window.print();
-                            } else {
-                                VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
-                                    var collection = 'board-cards-ext-collection';
-                                    var configDoc = 'board-cards-config';
-
-                                    dataService.getDocument(collection,configDoc).then(function(doc) {
-                                        // document exists
-                                        console.log("Configuration document exists.");
-                                        console.log(doc);
-                                        element = document.getElementById("config");
-                                        // loop over the elements and write them out for user to edit and submit
-                                    },function(err) {
-                                        // console.log(err)
-                                        if(err.status == '404') {
-                                            console.log("No document found, creating default document.");
-                                            defaultConfig = {
-                                                "id": configDoc,
-                                                "user-story": "SlateBlue",
-                                                "task": "Gold",
-                                                "bug": "Tomato",
-                                                "epic": "DarkOrange",
-                                                "feature": "LightGreen",
-                                                "issue": "SeaGreen"
-                                            }
-                                            dataService.setDocument(collection,defaultConfig).then(function(doc) {
-                                                console.log("Doc id: " + doc.id);
-                                                console.log("Reloading window");
-                                                location.reload();
-                                            });
-                                        } else {
-                                            console.log("An error occurred.");
-                                            console.log(err);
-                                            alert("The extension was unable to find or create the config document.  The error has been written to the browser console.");
-                                        }
-                                    })
-                                })     
-                            }
+                            window.print();
                         }); 
                     });
                 }
