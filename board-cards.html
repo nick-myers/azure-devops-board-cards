@@ -36,7 +36,7 @@
                     console.log('#1 - Querying for all work items in current iteration');
                     return client.queryByWiql(query, projectId).then(function(result) {
                         var workItemIds = [];
-                        workItemIds = result.workItems.map(val => val.id);
+                        workItemIds = result.workItems.map(function (val) { return val.id; });
                         console.log('#2 - Querying for work items returned');
                         var workItemDetails = client.getWorkItems(workItemIds,undefined,undefined,4).then(function(workItems) {
                             for(var x = 0; x < workItems.length; x++) {
