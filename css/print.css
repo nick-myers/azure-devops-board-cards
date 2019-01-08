@@ -1,35 +1,16 @@
 @page {
-    size: A4;
-    margin: 20px;
+    size: A4 portrait;
+    margin: 2cm;
     margin: auto;
   }
   @media print {
     html, body {
       width: 210mm;
       height: 297mm;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .workItem {
-        width: 67mm;
-        height:49mm;
-        padding: 4px;
-        margin: 2px;
-        float: left;
-        overflow: hidden;
-        padding-top: 2px;
+    .workitem {
         page-break-inside: avoid;
-    }
-    div.type {
-        float: left;
-    }
-    div.id {
-        float:right; 
-    }
-    div.title {
-        clear: both;
-        margin: 10px;
-        padding-top: 10px;
-    }
-    div#config {
-        display: none;
+        page-break-after: auto
     }
   }

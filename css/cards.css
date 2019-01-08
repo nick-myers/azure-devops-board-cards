@@ -1,5 +1,25 @@
 .workItem {
     border: 0.5px dashed grey;
+    width: 67mm;
+    height:49mm;
+    padding: 4px;
+    float: left;
+    overflow: hidden;
+    padding-top: 2px;
+}
+div.type {
+    float: left;
+}
+div.id {
+    float:right; 
+}
+div.title {
+    clear: both;
+    margin: 10px;
+    padding-top: 10px;
+}
+div#config {
+    display: none;
 }
 .user-story {
     border-left: 4px solid #4C61FE;
