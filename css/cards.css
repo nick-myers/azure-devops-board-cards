@@ -1,7 +1,7 @@
 .workItem {
     border: 0.5px dashed grey;
-    width: 67mm;
-    height:49mm;
+    width: 33%;
+    height:50mm;
     padding: 4px;
     float: left;
     overflow: hidden;
@@ -90,4 +90,20 @@ div#config {
 
 .spike .type, .spike .id {
     color: maroon;
+}
+
+.technical-support {
+    border-left: 4px solid chocolate;
+}
+
+.technical-support .type, .technical-support .id {
+    color: chocolate;
+}
+
+.operational-incident {
+    border-left: 4px solid darkred;
+}
+
+.operational-incident .type, .operational-incident .id {
+    color: darkred;
 }

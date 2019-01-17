@@ -1,16 +1,4 @@
-@page {
-    size: A4 portrait;
-    margin: 2cm;
-    margin: auto;
-  }
-  @media print {
-    html, body {
-      width: 210mm;
-      height: 297mm;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .workitem {
-        page-break-inside: avoid;
-        page-break-after: auto
-    }
-  }
+.workitem {
+  page-break-inside: avoid;
+  page-break-after: auto
+}
