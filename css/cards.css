@@ -1,11 +1,15 @@
 .workItem {
     border: 0.5px dashed grey;
-    width: 33%;
+    width: 30%;
     height:50mm;
-    padding: 4px;
     float: left;
     overflow: hidden;
-    padding-top: 2px;
+    padding: 4px;
+    padding-top: 6px;
+    padding-left: 7px;
+    padding-right: 7px;
+    font-size: 1.1em;
+    margin: 5px;
 }
 div.type {
     float: left;

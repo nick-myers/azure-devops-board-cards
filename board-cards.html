@@ -48,9 +48,21 @@
                                     workItems[x].relations.forEach(function (relation) {
                                         if (relation.rel === 'System.LinkTypes.Hierarchy-Reverse') {
                                             let parentId = relation.url.split('/').slice(-1)[0];
-                                            // console.log('Calling getWorkItem() with: ' + parentId);
+                                            console.log('Calling getWorkItem() with: ' + parentId);
                                             let parentItemDetails = client.getWorkItem(parentId);
-                                            // console.log(parentItemDetails);
+                                            console.log(parentItemDetails);
+                                            function listAllProperties(parentItemDetails) {
+                                                var objectToInspect;     
+                                                var result = [];
+                                                
+                                                for(objectToInspect = o; objectToInspect !== null; 
+                                                    objectToInspect = Object.getPrototypeOf(objectToInspect)) {  
+                                                    result = result.concat(
+                                                        Object.getOwnPropertyNames(objectToInspect)
+                                                    );  
+                                                }
+                                                console.log(result); 
+                                            }
                                             //let parentTitle = parentItemDetails.fields['System.Title'];
                                             //console.log(parentId);
                                             //console.log(parentTitle);
@@ -60,14 +72,14 @@
                                 if(x == 0) {
                                     let section = document.createElement('section');
                                     section.className = 'sheet padding-10mm';
-                                    console.log('sheetCount is: ' + sheetCount);
+                                    //console.log('sheetCount is: ' + sheetCount);
                                     var sheetId = 'sheet' + sheetCount;
                                     section.id = sheetId;
                                     document.getElementById("main").appendChild(section);
                                 } else if (x % 15 === 0 && x != 0) {
                                     let section = document.createElement('section');
                                     section.className = 'sheet padding-10mm';
-                                    console.log('sheetCount is: ' + sheetCount);
+                                    //console.log('sheetCount is: ' + sheetCount);
                                     var sheetId = 'sheet' + sheetCount;  
                                     section.id = sheetId;
                                     document.getElementById("main").appendChild(section);
@@ -78,16 +90,16 @@
                                 div.className = className;
                                 let cardCount = x + 1;
                                 if(cardCount % 15 === 0 && x != 0) {
-                                    console.log('Ending sheet at ' + cardCount);
+                                    // console.log('Ending sheet at ' + cardCount);
                                     div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"></div><div class="parent-name"></div></section>';
                                     sheetCount++;
                                 } else {
-                                    console.log('No need to start or end sheet (' + cardCount + ')');
+                                    // console.log('No need to start or end sheet (' + cardCount + ')');
                                     div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"></div><div class="parent-name"></div>';
                                 }
-                                console.log('About to try and append child to sheetId:' + sheetId);
+                                // console.log('About to try and append child to sheetId:' + sheetId);
                                 document.getElementById(sheetId).appendChild(div);
-                                console.log('Loop completed: ' + x);
+                                // console.log('Loop completed: ' + x);
                             }
                             window.focus();
                             window.print();
