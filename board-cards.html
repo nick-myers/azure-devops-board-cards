@@ -138,24 +138,27 @@
                                 let id = workItems[x].id;
                                 let title = workItems[x].fields['System.Title'];
                                 let type = workItems[x].fields['System.WorkItemType'];
+                                let workItemParentId = '';
                                 if (workItems[x].relations) {
                                     workItems[x].relations.forEach(function (relation) {
                                         if (relation.rel === 'System.LinkTypes.Hierarchy-Reverse') {
                                             let parentId = relation.url.split('/').slice(-1)[0];
-                                            console.log('Calling getWorkItem() with: ' + parentId);
+                                            workItemParentId = parentId;
+                                            //console.log('Calling getWorkItem() with: ' + parentId);
                                             let parentItemDetails = client.getWorkItem(parentId);
-                                            console.log(parentItemDetails);
+                                            //console.log(parentItemDetails);
                                             //let parentTitle = parentItemDetails.fields['System.Title'];
                                             //console.log(parentId);
                                             //console.log(parentTitle);
                                         }
                                     })
                                 }
+                                console.log('workItemParentId: ' + workItemParentId)
                                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
                                 let div = document.createElement('div');
                                 let className = 'workItem ' + styleType + ' ' + id;
                                 div.className = className;
-                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"></div><div class="parent-name"></div>';
+                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</strong></div><div class="parent-name"></div>';
                                 document.getElementById("main").appendChild(div);
                             }
                             window.focus();

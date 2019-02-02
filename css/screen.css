@@ -10,6 +10,9 @@ body.board-cards {
     overflow: hidden;
     padding-top: 2px;
 }
+.parent-id {
+    margin: 10px;
+}
 div.type {
     float: left;
 }
@@ -20,6 +23,7 @@ div.title {
     clear: both;
     margin: 10px;
     padding-top: 10px;
+    font-size: 1.2em;
 }
 div#config {
     margin: 20px;
