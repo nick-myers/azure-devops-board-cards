@@ -128,11 +128,12 @@
                     var context = VSS.getWebContext();
                     var projectId = context.project.id;
                     var project = context.project.name;
-                    console.log('#1 - Querying for all work items in current iteration');
+                    // console.log('#1 - Querying for all work items in current iteration');
                     return client.queryByWiql(query, projectId).then(function(result) {
                         var workItemIds = [];
-                        workItemIds = result.workItems.map(val => val.id);
-                        console.log('#2 - Querying for work items returned');
+                        workItemIds = result.workItems.map(function (val) { return val.id; });
+                        // console.log('#2 - Querying for work items returned');
+                        var sheetCount = 0;
                         var workItemDetails = client.getWorkItems(workItemIds,undefined,undefined,4).then(function(workItems) {
                             for(var x = 0; x < workItems.length; x++) {
                                 let id = workItems[x].id;
@@ -146,20 +147,55 @@
                                             workItemParentId = parentId;
                                             //console.log('Calling getWorkItem() with: ' + parentId);
                                             let parentItemDetails = client.getWorkItem(parentId);
-                                            //console.log(parentItemDetails);
-                                            //let parentTitle = parentItemDetails.fields['System.Title'];
-                                            //console.log(parentId);
-                                            //console.log(parentTitle);
+                                            console.log(parentItemDetails);
+                                            function listAllProperties(parentItemDetails) {
+                                                var objectToInspect;     
+                                                var result = [];
+                                                
+                                                for(objectToInspect = o; objectToInspect !== null; 
+                                                    objectToInspect = Object.getPrototypeOf(objectToInspect)) {  
+                                                    result = result.concat(
+                                                        Object.getOwnPropertyNames(objectToInspect)
+                                                    );  
+                                                }
+                                                console.log(result); 
+                                            }
                                         }
                                     })
+                                }
+                                if(x == 0) {
+                                    let section = document.createElement('section');
+                                    section.className = 'sheet padding-10mm';
+                                    //console.log('sheetCount is: ' + sheetCount);
+                                    var sheetId = 'sheet' + sheetCount;
+                                    section.id = sheetId;
+                                    document.getElementById("main").appendChild(section);
+                                } else if (x % 15 === 0 && x != 0) {
+                                    let section = document.createElement('section');
+                                    section.className = 'sheet padding-10mm';
+                                    //console.log('sheetCount is: ' + sheetCount);
+                                    var sheetId = 'sheet' + sheetCount;  
+                                    section.id = sheetId;
+                                    document.getElementById("main").appendChild(section);
                                 }
                                 console.log('workItemParentId: ' + workItemParentId)
                                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
                                 let div = document.createElement('div');
-                                let className = 'workItem ' + styleType + ' ' + id;
+                                let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
                                 div.className = className;
-                                div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</strong></div><div class="parent-name"></div>';
-                                document.getElementById("main").appendChild(div);
+                                let cardCount = x + 1;
+                                if(cardCount % 15 === 0 && x != 0) {
+                                    // console.log('Ending sheet at ' + cardCount);
+                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
+                                    sheetCount++;
+                                } else {
+                                    // console.log('No need to start or end sheet (' + cardCount + ')');
+                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</div><div class="parent-name"></div>';
+                                }
+                                // console.log('About to try and append child to sheetId:' + sheetId);
+                                document.getElementById(sheetId).appendChild(div);
+                                // console.log('Loop completed: ' + x);
+
                             }
                             window.focus();
                             window.print();
@@ -170,11 +206,13 @@
         });
         VSS.notifyLoadSucceeded();
     </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
     <link rel="stylesheet" media="all" href="css/cards.css">
     <link rel="stylesheet" media="screen" href="css/screen.css">
-    <link rel="stylesheet" media="print" href="css/print.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/paper-css/0.4.1/paper.min.css">
+    <style>@page { size: A4 }</style>
 </head>
-<body class="board-cards">
+<body class="board-cards a4">
     <main id="main">
         <h1>Print board cards</h1>
         <form id="config-form">

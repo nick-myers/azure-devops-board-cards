@@ -1,10 +1,40 @@
 .workItem {
     border: 0.5px dashed grey;
+    width: 30%;
+    height:50mm;
+    float: left;
+    overflow: hidden;
+    padding: 4px;
+    padding-top: 6px;
+    padding-left: 7px;
+    padding-right: 7px;
+    font-size: 1.1em;
+    margin: 5px;
+}
+div.type {
+    float: left;
+}
+div.id {
+    float:right; 
+}
+div.title {
+    clear: both;
+    margin: 10px;
+    padding-top: 10px;
+}
+div#config {
+    display: none;
 }
 .user-story {
     border-left: 4px solid #4C61FE;
 }
 .user-story .type, .user-story .id {
+    color: #4C61FE;
+}
+.product-backlog-item {
+    border-left: 4px solid #4C61FE;
+}
+.product-backlog-item .type, .product-backlog-item .id {
     color: #4C61FE;
 }
 .task {
@@ -57,6 +87,29 @@
 .feature .type, .feature .id {
     color: blueviolet;
 }
+
+.spike {
+    border-left: 4px solid maroon;
+}
+
+.spike .type, .spike .id {
+    color: maroon;
+}
+
+.technical-support {
+    border-left: 4px solid chocolate;
+}
+
+.technical-support .type, .technical-support .id {
+    color: chocolate;
+}
+
+.operational-incident {
+    border-left: 4px solid darkred;
+}
+
+.operational-incident .type, .operational-incident .id {
+    color: darkred;
 
 .epic {
     border-left: 4px solid teal;
