@@ -11,7 +11,7 @@
         });
         VSS.register("backlogTabObject", {
             pageTitle: function(state) {
-                return "Print board cards";
+                return false;
             },
             updateContext: function(tabContext) {                            
             },
@@ -62,11 +62,11 @@
             });
         }
         VSS.ready(function () {
-            console.log('VSS has said it is ready. Here we go ');
-                document.getElementById("configureButton").addEventListener("click", function(event){
-                configure();
-                event.preventDefault();
-            });
+            //console.log('VSS has said it is ready. Here we go...');
+                //document.getElementById("configureButton").addEventListener("click", function(event){
+                //configure();
+                //event.preventDefault();
+            //});
             VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
                 var collection = 'board-cards-ext-collection';
                 var configDoc = 'board-cards-config';
@@ -74,23 +74,6 @@
                     // document exists
                     console.log("Configuration document exists.  Content follows:");
                     console.log(doc);
-                    /*
-                    for (var key in doc) {
-                        if (doc.hasOwnProperty(key)) {
-                            if(key == 'id') {
-                                console.log('Skipping id element');
-                            } else if (key == '__etag') {
-                                console.log('Skipping __etag element');
-                            } else {
-                                let div = document.createElement('div');
-                                let className = 'config-' + key;
-                                div.className = className;
-                                div.innerHTML = '<label for="' + key + '">' + key + ': </label><input type=text id="' + key + '" name="' + key + '" value="' + doc[key] + '>';
-                                document.getElementById("config").appendChild(div);
-                                console.log(key + " -> " + doc[key]);
-                            }
-                        }
-                    } */
                 },function(err) {
                     // console.log(err)
                     if(err.status == '404') {
@@ -184,13 +167,14 @@
                                 let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
                                 div.className = className;
                                 let cardCount = x + 1;
+                                workItemParentId = 'Parent: ' + workItemParentId;
                                 if(cardCount % 15 === 0 && x != 0) {
                                     // console.log('Ending sheet at ' + cardCount);
-                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
+                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
                                     sheetCount++;
                                 } else {
                                     // console.log('No need to start or end sheet (' + cardCount + ')');
-                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id">Parent: <strong>' + workItemParentId + '</div><div class="parent-name"></div>';
+                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div>';
                                 }
                                 // console.log('About to try and append child to sheetId:' + sheetId);
                                 document.getElementById(sheetId).appendChild(div);
@@ -214,12 +198,6 @@
 </head>
 <body class="board-cards a4">
     <main id="main">
-        <h1>Print board cards</h1>
-        <form id="config-form">
-            <div id="config">
-                    <button id="configureButton">Configure extension</button>
-            </div>
-        </form>
     </main>
 </body>
 </html>

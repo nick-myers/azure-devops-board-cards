@@ -67,11 +67,6 @@
             "addressable": true
         },
         {
-            "path": "css/print.css",
-            "contentType": "text/css",
-            "addressable": true
-        },
-        {
             "path": "css/cards.css",
             "contentType": "text/css",
             "addressable": true

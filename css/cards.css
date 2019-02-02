@@ -11,6 +11,9 @@
     font-size: 1.1em;
     margin: 5px;
 }
+div.parent-id {
+    text-align: right;
+}
 div.type {
     float: left;
 }
@@ -110,7 +113,7 @@ div#config {
 
 .operational-incident .type, .operational-incident .id {
     color: darkred;
-
+}
 .epic {
     border-left: 4px solid teal;
 }

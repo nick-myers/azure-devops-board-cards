@@ -4,9 +4,6 @@ body.board-cards {
 .workItem {
     height:170px;
 }
-.parent-id {
-    margin: 10px;
-}
 div.type {
     float: left;
 }
