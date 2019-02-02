@@ -2,12 +2,19 @@
     "manifestVersion": 1,
     "id": "board-cards-dev",
     "publisher": "NickMyers",
-    "version": "1.1.126",
+    "version": "1.1.132",
     "name": "(DEV) Board cards for printing",
     "description": "Adds a 'Print' tab to Sprint boards, which displays all the work items in @currentIteration and triggers the browsers print dailog.",
     "public": false,
     "categories": ["Azure Boards"],
     "scopes": ["vso.work"],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nick-myers/azure-devops-board-cards"
+    },
+    "bugs": {
+        "url": "https://github.com/nick-myers/azure-devops-board-cards/issues"
+    },
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
@@ -39,11 +46,24 @@
                 "uri": "board-cards.html",
                 "registeredObjectId": "board-cards"
             }
+        },
+        {
+            "id": "configuration",
+            "type": "ms.vss-web.control",
+            "description": "The content to be displayed in the dialog",
+            "targets": [],
+            "properties": {
+                "uri": "configuration.html"
+            }
         }
     ],
     "files": [
         {
             "path": "board-cards.html",
+            "addressable": true
+        },
+        {
+            "path": "configuration.html",
             "addressable": true
         },
         {

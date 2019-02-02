@@ -110,4 +110,26 @@ div#config {
 
 .operational-incident .type, .operational-incident .id {
     color: darkred;
+
+.epic {
+    border-left: 4px solid teal;
+}
+
+.epic .type, .epic .id {
+    color: teal;
+}
+
+.issue {
+    border-left: 4px solid firebrick;
+}
+.issue .type, .issue .id {
+    color: firebrick;
+}
+
+.spike {
+    border-left: 4px solid maroon;
+}
+
+.spike .type, .spike .id {
+    color: maroon;
 }
