@@ -37,7 +37,7 @@
                     },
                     okCallback: function (result) {
                         // Log the result to the console
-                        console.log(JSON.stringify(result));
+                        //console.log(JSON.stringify(result));
                     }
                 };
                 dialogService.openDialog(contributionId, dialogOptions).then(function(dialog) {
@@ -72,12 +72,12 @@
                 var configDoc = 'board-cards-config';
                 dataService.getDocument(collection,configDoc).then(function(doc) {
                     // document exists
-                    console.log("Configuration document exists.  Content follows:");
-                    console.log(doc);
+                    //console.log("Configuration document exists.  Content follows:");
+                    //console.log(doc);
                 },function(err) {
                     // console.log(err)
                     if(err.status == '404') {
-                        console.log("No document found, creating default document.");
+                        //console.log("No document found, creating default document.");
                         defaultConfig = {
                             "id": configDoc,
                             "user-story": "SlateBlue",
@@ -88,15 +88,15 @@
                             "issue": "SeaGreen"
                         }
                         dataService.setDocument(collection,defaultConfig).then(function(doc) {
-                            console.log('Setting document as follows:');
-                            console.log("Doc id: " + doc.id);
-                            console.log(doc);
-                            console.log("Reloading window");
+                            //console.log('Setting document as follows:');
+                            //console.log("Doc id: " + doc.id);
+                            //console.log(doc);
+                            //console.log("Reloading window");
                             location.reload();
                         });
                     } else {
-                        console.log("An error occurred.");
-                        console.log(err);
+                        //console.log("An error occurred.");
+                        //console.log(err);
                         alert("The extension was unable to find or create the config document.  The error has been written to the browser console.");
                     }
                 })
@@ -130,7 +130,7 @@
                                             workItemParentId = parentId;
                                             //console.log('Calling getWorkItem() with: ' + parentId);
                                             let parentItemDetails = client.getWorkItem(parentId);
-                                            console.log(parentItemDetails);
+                                            //console.log(parentItemDetails);
                                             function listAllProperties(parentItemDetails) {
                                                 var objectToInspect;     
                                                 var result = [];
@@ -141,7 +141,7 @@
                                                         Object.getOwnPropertyNames(objectToInspect)
                                                     );  
                                                 }
-                                                console.log(result); 
+                                                //console.log(result); 
                                             }
                                         }
                                     })
@@ -161,14 +161,14 @@
                                     section.id = sheetId;
                                     document.getElementById("main").appendChild(section);
                                 }
-                                console.log('workItemParentId: ' + workItemParentId)
+                                //console.log('workItemParentId: ' + workItemParentId)
                                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
                                 let div = document.createElement('div');
                                 let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
                                 div.className = className;
                                 let cardCount = x + 1;
                                 workItemParentId = 'Parent: ' + workItemParentId;
-                                
+
                                 if(cardCount % 15 === 0 && x != 0) {
                                     // console.log('Ending sheet at ' + cardCount);
                                     div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
