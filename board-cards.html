@@ -168,6 +168,7 @@
                                 div.className = className;
                                 let cardCount = x + 1;
                                 workItemParentId = 'Parent: ' + workItemParentId;
+                                
                                 if(cardCount % 15 === 0 && x != 0) {
                                     // console.log('Ending sheet at ' + cardCount);
                                     div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
