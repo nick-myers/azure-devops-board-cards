@@ -11,8 +11,22 @@
     font-size: 1.1em;
     margin: 5px;
 }
-div.parent-id {
-    text-align: right;
+.truncate {
+    width: 75%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    }
+.truncate-parent-title {
+    width: 75%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    }
+div.parent {
+    padding: 5px;
+    border: 1px dashed grey;
+    color: darkslategrey;
 }
 div.type {
     float: left;
@@ -135,4 +149,11 @@ div#config {
 
 .spike .type, .spike .id {
     color: maroon;
+}
+.parent {
+    font-size: 0.8em;
+}
+span.parent-id {
+    margin-right: 3px; 
+    font-weight: bold;
 }

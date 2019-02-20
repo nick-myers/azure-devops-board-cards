@@ -22,6 +22,11 @@
                 return false;
             }
         });
+        VSS.require([
+                "VSS/Service",
+                "TFS/WorkItemTracking/RestClient",
+                "TFS/WorkItemTracking/Contracts"
+                ]);
         function configure() {
             VSS.getService(VSS.ServiceIds.Dialog).then(function(dialogService) {
                 var configurationForm;
@@ -36,8 +41,7 @@
                         return configurationForm ? configurationForm.getFormData() : null;
                     },
                     okCallback: function (result) {
-                        // Log the result to the console
-                        //console.log(JSON.stringify(result));
+
                     }
                 };
                 dialogService.openDialog(contributionId, dialogOptions).then(function(dialog) {
@@ -60,24 +64,14 @@
                 });
 
             });
-        }
+        } 
         VSS.ready(function () {
-            //console.log('VSS has said it is ready. Here we go...');
-                //document.getElementById("configureButton").addEventListener("click", function(event){
-                //configure();
-                //event.preventDefault();
-            //});
             VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
                 var collection = 'board-cards-ext-collection';
                 var configDoc = 'board-cards-config';
                 dataService.getDocument(collection,configDoc).then(function(doc) {
-                    // document exists
-                    //console.log("Configuration document exists.  Content follows:");
-                    //console.log(doc);
                 },function(err) {
-                    // console.log(err)
                     if(err.status == '404') {
-                        //console.log("No document found, creating default document.");
                         defaultConfig = {
                             "id": configDoc,
                             "user-story": "SlateBlue",
@@ -88,15 +82,9 @@
                             "issue": "SeaGreen"
                         }
                         dataService.setDocument(collection,defaultConfig).then(function(doc) {
-                            //console.log('Setting document as follows:');
-                            //console.log("Doc id: " + doc.id);
-                            //console.log(doc);
-                            //console.log("Reloading window");
                             location.reload();
                         });
                     } else {
-                        //console.log("An error occurred.");
-                        //console.log(err);
                         alert("The extension was unable to find or create the config document.  The error has been written to the browser console.");
                     }
                 })
@@ -105,90 +93,73 @@
                 "VSS/Service",
                 "TFS/WorkItemTracking/RestClient",
                 "TFS/WorkItemTracking/Contracts"
-                ], function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts) {
-                    var client = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient); 
-                    var query = {'query': 'SELECT [System.Id] FROM WorkItems WHERE [System.IterationPath] = @CurrentIteration'};
+                ], async function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts) {
+                    var witClient = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient);
                     var context = VSS.getWebContext();
                     var projectId = context.project.id;
                     var project = context.project.name;
-                    // console.log('#1 - Querying for all work items in current iteration');
-                    return client.queryByWiql(query, projectId).then(function(result) {
-                        var workItemIds = [];
-                        workItemIds = result.workItems.map(function (val) { return val.id; });
-                        // console.log('#2 - Querying for work items returned');
-                        var sheetCount = 0;
-                        var workItemDetails = client.getWorkItems(workItemIds,undefined,undefined,4).then(function(workItems) {
-                            for(var x = 0; x < workItems.length; x++) {
-                                let id = workItems[x].id;
-                                let title = workItems[x].fields['System.Title'];
-                                let type = workItems[x].fields['System.WorkItemType'];
-                                let workItemParentId = '';
-                                if (workItems[x].relations) {
-                                    workItems[x].relations.forEach(function (relation) {
-                                        if (relation.rel === 'System.LinkTypes.Hierarchy-Reverse') {
-                                            let parentId = relation.url.split('/').slice(-1)[0];
-                                            workItemParentId = parentId;
-                                            //console.log('Calling getWorkItem() with: ' + parentId);
-                                            let parentItemDetails = client.getWorkItem(parentId);
-                                            //console.log(parentItemDetails);
-                                            function listAllProperties(parentItemDetails) {
-                                                var objectToInspect;     
-                                                var result = [];
-                                                
-                                                for(objectToInspect = o; objectToInspect !== null; 
-                                                    objectToInspect = Object.getPrototypeOf(objectToInspect)) {  
-                                                    result = result.concat(
-                                                        Object.getOwnPropertyNames(objectToInspect)
-                                                    );  
-                                                }
-                                                //console.log(result); 
-                                            }
-                                        }
-                                    })
-                                }
-                                if(x == 0) {
-                                    let section = document.createElement('section');
-                                    section.className = 'sheet padding-10mm';
-                                    //console.log('sheetCount is: ' + sheetCount);
-                                    var sheetId = 'sheet' + sheetCount;
-                                    section.id = sheetId;
-                                    document.getElementById("main").appendChild(section);
-                                } else if (x % 15 === 0 && x != 0) {
-                                    let section = document.createElement('section');
-                                    section.className = 'sheet padding-10mm';
-                                    //console.log('sheetCount is: ' + sheetCount);
-                                    var sheetId = 'sheet' + sheetCount;  
-                                    section.id = sheetId;
-                                    document.getElementById("main").appendChild(section);
-                                }
-                                //console.log('workItemParentId: ' + workItemParentId)
-                                let styleType = type.replace(/\s+/g, '-').toLowerCase();
-                                let div = document.createElement('div');
-                                let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
-                                div.className = className;
-                                let cardCount = x + 1;
-                                workItemParentId = 'Parent: ' + workItemParentId;
+                    var sheetCount = 0;
+                    var query = {'query': 'SELECT [System.Id] FROM WorkItems WHERE [System.IterationPath] = @CurrentIteration'};
+                    let queryResult = await witClient.queryByWiql(query, projectId);
+                    let workItemIds = await queryResult.workItems.map(function (val) { return val.id; });
+                    let workItemDetails = await witClient.getWorkItems(workItemIds,undefined,undefined,4);
+                    for(var x = 0; x < workItemDetails.length; x++) {
+                        let id = workItemDetails[x].id;
+                        let title = workItemDetails[x].fields['System.Title'];
+                        let type = workItemDetails[x].fields['System.WorkItemType'];
+                        let styleType = type.replace(/\s+/g, '-').toLowerCase();
+                        
+                        if(x === 0) {
+                            let section = document.createElement('section');
+                            section.className = 'sheet padding-10mm';
+                            var sheetId = 'sheet' + sheetCount;
+                            section.id = sheetId;
+                            document.getElementById("main").appendChild(section);
+                        } else if (x % 15 === 0 && x != 0) {
+                            let section = document.createElement('section');
+                            section.className = 'sheet padding-10mm';
+                            var sheetId = 'sheet' + sheetCount;  
+                            section.id = sheetId;
+                            document.getElementById("main").appendChild(section);
+                        }
 
-                                if(cardCount % 15 === 0 && x != 0) {
-                                    // console.log('Ending sheet at ' + cardCount);
-                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div></section>';
-                                    sheetCount++;
-                                } else {
-                                    // console.log('No need to start or end sheet (' + cardCount + ')');
-                                    div.innerHTML = '<div class="type">' + type + '</div><div class="id">' + id + '</div><div class="title">' + title + '</div><div class="parent-id"><strong>' + workItemParentId + '</div><div class="parent-name"></div>';
-                                }
-                                // console.log('About to try and append child to sheetId:' + sheetId);
-                                document.getElementById(sheetId).appendChild(div);
-                                // console.log('Loop completed: ' + x);
-
-                            }
-                            window.focus();
-                            window.print();
-                        }); 
-                    });
-                }
-            );
-        });
+                        let div = document.createElement('div');
+                        let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
+                        div.className = className;
+                        let cardCount = x + 1;
+                        const stringParts = [];
+                        stringParts.push(`<div class="type truncate">${type}</div><div class="id">${id}</div><div class="title">${title}</div>`);
+                        if (workItemDetails[x].relations) { 
+                            const { url } = 
+                            workItemDetails[x].relations.find(
+                                ({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse'
+                            );  
+                            //const splitted = url.split('/').slice(-1)[0];
+                            const parentId = url.split('/').slice(-1)[0];
+                            //console.log(`Parent ID: ${parentId}`);
+                            //console.log(`getParentID() called with ${parentId}`);
+                            const { fields } = await witClient.getWorkItem(parentId, ['System.Title']);
+                            //console.log(JSON.stringify(fields));
+                            const parentWorkItemTitleString = await fields['System.Title'];
+                            //console.log(`parentWorkItemTitleString: ${parentWorkItemTitleString}`);
+                            stringParts.push(`<div class="parent"><span class="parent-id">${parentId}</span><span class="parent-name"> ${parentWorkItemTitleString}</span></div>`)
+                        }
+                        if(cardCount % 15 === 0 && x != 0) {
+                            stringParts.push('</section>');
+                            sheetCount++;
+                        } 
+                        while (div.hasChildNodes()) {
+                            div.firstChild.remove();
+                        }
+                        let stringToInsert = stringParts.join("");
+                        console.log(`stringToInsert: ${stringToInsert}`);
+                        div.insertAdjacentHTML("beforeend", stringToInsert);
+                        document.getElementById(sheetId).appendChild(div);      
+                    }
+                    window.focus();
+                    window.print();
+                })
+            })
         VSS.notifyLoadSucceeded();
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
