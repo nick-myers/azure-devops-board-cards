@@ -27,45 +27,7 @@
                 "TFS/WorkItemTracking/RestClient",
                 "TFS/WorkItemTracking/Contracts"
                 ]);
-        function configure() {
-            VSS.getService(VSS.ServiceIds.Dialog).then(function(dialogService) {
-                var configurationForm;
-                var extensionCtx = VSS.getExtensionContext();
-                var contributionId = extensionCtx.publisherId + "." + extensionCtx.extensionId + ".configuration";
-                var dialogOptions = {
-                    title: "Configuration options",
-                    width: 800,
-                    height: 600,
-                    getDialogResult: function() {
-                        // Get the result from configurationForm object
-                        return configurationForm ? configurationForm.getFormData() : null;
-                    },
-                    okCallback: function (result) {
-
-                    }
-                };
-                dialogService.openDialog(contributionId, dialogOptions).then(function(dialog) {
-                    // Get configurationForm instance which is registered in configurationForm.html
-                    dialog.getContributionInstance("configuration").then(function (configurationFormInstance) {
-
-                        // Keep a reference of registration form instance (to be used above in dialog options)
-                        configurationForm = configurationFormInstance;
-
-                        // Subscribe to form input changes and update the Ok enabled state
-                        configurationForm.attachFormChanged(function(isValid) {
-                            dialog.updateOkButton(isValid);
-                        });
-
-                        // Set the initial ok enabled state
-                        configurationForm.isFormValid().then(function (isValid) {
-                            dialog.updateOkButton(isValid);
-                        });
-                    });                            
-                });
-
-            });
-        } 
-        VSS.ready(function () {
+        VSS.ready(function () {           
             VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
                 var collection = 'board-cards-ext-collection';
                 var configDoc = 'board-cards-config';
@@ -92,10 +54,50 @@
             VSS.require([
                 "VSS/Service",
                 "TFS/WorkItemTracking/RestClient",
-                "TFS/WorkItemTracking/Contracts"
-                ], async function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts) {
-                    var witClient = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient);
-                    var context = VSS.getWebContext();
+                "TFS/WorkItemTracking/Contracts",
+                "TFS/Work/RestClient"
+                ], 
+                    async function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts, TFS_Work_RestClient) {
+                    let client = TFS_Work_RestClient.getClient();
+                    let context = VSS.getWebContext();
+                    let teamContext = { projectId: context.project.id, teamId: context.team.id, project: "", team: "" };
+                    let ul = document.getElementById("iterationPaths");
+                    let teamIterations = client.getTeamIterations(teamContext).then(function(iterations) {
+                        let configurationDiv = document.getElementById('configuration');
+                        for(let x = 0; x < iterations.length; x++) {
+                            let iterationPathId = iterations[x].id;
+                            let iterationPath = iterations[x].path;
+                            let startDate = iterations[x].attributes['startDate'];
+                            let endDate = iterations[x].attributes['finishDate'];
+                            let todayDate = new Date();
+                            let li = document.createElement("li");
+                            let a = document.createElement('a');
+                            let linkText = '';
+                            if(todayDate > startDate && todayDate < endDate){
+                                linkText = document.createTextNode(iterationPath + " (Active iteration)");
+                            } else {
+                                linkText = document.createTextNode(iterationPath);
+                            }
+                            a.appendChild(linkText);
+                            a.title = iterationPath;
+                            a.href = "'#'";
+                            a.onclick = function() {                        
+                                // Get data service
+                                VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
+                                    // Set value in user scope
+                                    dataService.setValue("userIterationPath", iterationPath, {scopeType: "User"}).then(function(value) {
+                                        console.log("Iteration path is now " + value);
+                                    });
+                                });
+                                return false;
+                            }
+                            li.appendChild(a);
+                            ul.appendChild(li);
+
+                        }
+                    });
+
+                    var witClient = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient);  
                     var projectId = context.project.id;
                     var project = context.project.name;
                     var sheetCount = 0;
@@ -130,19 +132,19 @@
                         const stringParts = [];
                         stringParts.push(`<div class="type truncate">${type}</div><div class="id">${id}</div><div class="title">${title}</div>`);
                         if (workItemDetails[x].relations) { 
-                            const { url } = 
+                            const { url }  = 
                             workItemDetails[x].relations.find(
                                 ({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse'
-                            );  
-                            //const splitted = url.split('/').slice(-1)[0];
-                            const parentId = url.split('/').slice(-1)[0];
-                            //console.log(`Parent ID: ${parentId}`);
-                            //console.log(`getParentID() called with ${parentId}`);
-                            const { fields } = await witClient.getWorkItem(parentId, ['System.Title']);
-                            //console.log(JSON.stringify(fields));
-                            const parentWorkItemTitleString = await fields['System.Title'];
-                            //console.log(`parentWorkItemTitleString: ${parentWorkItemTitleString}`);
-                            stringParts.push(`<div class="parent"><span class="parent-id">${parentId}</span><span class="parent-name"> ${parentWorkItemTitleString}</span></div>`)
+                            );
+                            if(url){
+                                
+                                const parentId = url.split('/').slice(-1)[0];
+                                const { fields } = await witClient.getWorkItem(parentId, ['System.Title']);
+                                console.log(url);
+                                const parentWorkItemTitleString = await fields['System.Title'];
+                                stringParts.push(`<div class="parent"><span class="parent-id">${parentId}</span><span class="parent-name"> ${parentWorkItemTitleString}</span></div>`) 
+                            }
+                            
                         }
                         if(cardCount % 15 === 0 && x != 0) {
                             stringParts.push('</section>');
@@ -152,10 +154,10 @@
                             div.firstChild.remove();
                         }
                         let stringToInsert = stringParts.join("");
-                        console.log(`stringToInsert: ${stringToInsert}`);
                         div.insertAdjacentHTML("beforeend", stringToInsert);
                         document.getElementById(sheetId).appendChild(div);      
                     }
+                    
                     window.focus();
                     window.print();
                 })
@@ -166,9 +168,18 @@
     <link rel="stylesheet" media="all" href="css/cards.css">
     <link rel="stylesheet" media="screen" href="css/screen.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/paper-css/0.4.1/paper.min.css">
+    <link rel="sytlesheet" media="print" href="css/print.css">
     <style>@page { size: A4 }</style>
 </head>
 <body class="board-cards a4">
+    <header id="header">
+        <div id="configuration">
+            <ul id="iterationPaths">
+
+            </ul>
+            <a href="#" onclick="window.focus();window.print();">Print</a>
+        </div>
+    </header>
     <main id="main">
     </main>
 </body>

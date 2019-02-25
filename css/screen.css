@@ -22,3 +22,8 @@ div#config {
     border: 1px solid black;
     background-color: WhiteSmoke;
 }
+form#form {
+    padding: 20px;
+    background-color: gainsboro;
+    margin-top: 20px;
+}

@@ -19,3 +19,10 @@ Following are two screenshots of the print output; I've had to obfuscate some of
 
 ![Print example 1](/images/print-example-1.png)
 ![Print example 2](/images/print-example-2.png)
+
+## How to build the package
+
+Windows Powershell 
+tfx extension create --manifest-globs vss-extension-dev.json --rev-version
+
+remove the -dev extension in order to build a package for production
