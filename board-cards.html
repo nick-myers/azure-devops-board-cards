@@ -184,8 +184,8 @@
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             // Set value in user scope
             await dataService.setValue("userIterationPath", '@CurrentIteration', {scopeType: "User"});
-            await dataService.setValue("userWorkItems", null, {scopeType: "User"});
-            await dataService.setValue('userAreaPath', null, {scopeType: 'User'});
+            await dataService.setValue("userWorkItems", '', {scopeType: "User"});
+            await dataService.setValue('userAreaPath', '', {scopeType: 'User'});
             location.reload(true);
         }
         function insertAreaPathSectionHeader() {
@@ -373,7 +373,10 @@
         }
         function setPrintHeader(iteration,areaPath) {
             const printHeader = document.createElement('h2');
-            printHeader.innerHTML = `Printing selected work item types in ${iteration} and ${areaPath}`;
+            printHeader.innerHTML = `Printing selected work item types in ${iteration}`;
+            if(areaPath != '') {
+                printHeader.innerHTML += ` and ${areaPath}`
+            }
             printHeader.id = 'workItemSelectSectionHeader';
             const div = document.getElementById('printHeader');
             div.appendChild(printHeader);
@@ -394,6 +397,7 @@
                 if(todayDate > startDate && todayDate < endDate){
                     linkText = document.createTextNode(iterationPath + ' (Active iteration)');
                     a.appendChild(linkText);
+                    a.classList.add('embolden');
                 } else {
                     linkText = document.createTextNode(iterationPath);
                     a.appendChild(linkText);

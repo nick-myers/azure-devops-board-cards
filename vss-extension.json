@@ -46,24 +46,11 @@
                 "uri": "board-cards.html",
                 "registeredObjectId": "board-cards"
             }
-        },
-        {
-            "id": "configuration",
-            "type": "ms.vss-web.control",
-            "description": "The content to be displayed in the dialog",
-            "targets": [],
-            "properties": {
-                "uri": "configuration.html"
-            }
         }
     ],
     "files": [
         {
             "path": "board-cards.html",
-            "addressable": true
-        },
-        {
-            "path": "configuration.html",
             "addressable": true
         },
         {
