@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "board-cards",
     "publisher": "NickMyers",
-    "version": "2.0",
+    "version": "2.2.16",
     "name": "Board cards for printing",
     "description": "Adds a 'Print' tab to Sprint boards, and allows users to select iterations, work item types and areas to print on A4 paper for putting on physical boards..",
     "public": true,

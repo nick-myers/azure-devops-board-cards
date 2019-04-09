@@ -37,14 +37,15 @@
             });
         });
         async function getIteration() {
-            let iteration = '';
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
-            if(dataService.getValue("userIterationPath", {scopeType: "User"})) {
-                iteration = dataService.getValue("userIterationPath", {scopeType: "User"});
+            let iterationExistsCheck = await dataService.getValue("userIterationPath", {scopeType: "User"});
+            if(iterationExistsCheck === undefined) {
+                let iteration = '@CurrentIteration';
+                return iteration;
             } else {
-                iteration = '@CurrentIteration';
+                let iteration = dataService.getValue("userIterationPath", {scopeType: "User"});
+                return iteration;
             }
-            return iteration;
         }
         function appendCountOfWorkItems(count) {
             let workItemSelectSectionHeader = document.getElementById('workItemSelectSectionHeader');
@@ -61,7 +62,6 @@
             } catch(err) {
                 console.log(`Error: ${err}`);
             }
-            
         }
         async function saveWorkItemTypes(){
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
@@ -249,14 +249,19 @@
             }
         }
         async function getUsersSavedAreaPath() {
-            let usersSavedAreaPath = '';
-            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
-            if(dataService.getValue("userAreaPath", {scopeType: "User"})) {
-                usersSavedAreaPath = await dataService.getValue("userAreaPath", {scopeType: "User"});
-                console.log(`Users saved area path is ${usersSavedAreaPath}`);
-                return usersSavedAreaPath;
-            } else {
+            let userHasSavedAreaPath = checkForSavedAreaPath();
+            if(userHasSavedAreaPath === false) {
                 return false;
+            } else {
+                const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+                let usersSavedAreaPath = await dataService.getValue("userAreaPath", {scopeType: "User"});
+                if(userHasSavedAreaPath === false ) {
+                    console.log('User does not have a saved area path')
+                    return false;
+                } else {
+                    console.log(`Users saved area path is ${usersSavedAreaPath}`);
+                    return usersSavedAreaPath;
+                }
             }
         }
         function triggerPrint() {
@@ -382,12 +387,11 @@
             div.appendChild(printHeader);
         }
         async function getIterations(workClient,teamContext,iteration) {
-            let iterationPath = '';
             let teamIterations = await workClient.getClient().getTeamIterations(teamContext);
             let ul = document.getElementById('iterationPaths');
             for(let x = 0; x < teamIterations.length; x++) {
                 let iterationPathId = teamIterations[x].id;
-                iterationPath = teamIterations[x].path;
+                let iterationPath = teamIterations[x].path;
                 let startDate = teamIterations[x].attributes['startDate'];
                 let endDate = teamIterations[x].attributes['finishDate'];
                 let todayDate = new Date();
