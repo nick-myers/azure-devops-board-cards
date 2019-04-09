@@ -27,3 +27,85 @@ form#form {
     background-color: gainsboro;
     margin-top: 20px;
 }
+.no-display {
+    display: none !important;
+}
+header {
+    background-color: aliceblue;
+    padding: 20px;
+    margin: 20px;
+}
+#configuration {
+
+    width: 32%;
+    float: left;
+}
+#workitemConfiguration {
+    float: left;
+    width: 32%;
+}
+#areaPathConfiguration {
+    float: left;
+    width: 32%;
+}
+#controls {
+    text-align: center;
+    }
+#contact {
+    font-size: 1em;
+    text-align: right;
+    clear: both;
+    padding: 5px;
+}
+#print {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+#updateButton {
+    margin-top: 20px;
+}
+#workItemSelectSectionHeader {
+    text-align: center;
+    border-top: 1px solid black;
+    padding-top: 15px;
+    border-bottom: 1px solid black;
+    padding-bottom: 15px;
+}
+h1 {
+    font-size: 1.8em;
+}
+label {
+    line-height: 1.6em;
+}
+#areaPaths, #iterations, #workItemTypes {
+    font-size: 1.2em;
+}
+#guidance p {
+    font-size: 1.4em;
+}
+#loader {
+    position: relative;
+    z-index: 1;
+    left: 50%;
+    border: 6px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 6px solid #3498db;
+    width: 50px;
+    height: 50px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+  }
+  @-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+.embolden {
+    font-weight: 600;
+}

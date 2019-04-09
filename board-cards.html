@@ -4,12 +4,434 @@
     <meta charset="UTF-8">
     <script src="lib/VSS.SDK.min.js" type="text/javascript"></script>
     <script type="text/javascript">
+        "use strict";
         VSS.init({
             explicitNotifyLoaded: true,
             usePlatformScripts: true, 
             usePlatformStyles: true
         });
-        VSS.register("backlogTabObject", {
+        VSS.ready(function () {         
+            VSS.require(["VSS/Service","TFS/WorkItemTracking/RestClient","TFS/WorkItemTracking/Contracts","TFS/Work/RestClient"], 
+                async function (VSS_Service, TFS_Wit_WebApi,TFS_Contracts,TFS_WorkClient) {
+                const witClient = VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
+                const contracts = TFS_Contracts;
+                const workClient = TFS_WorkClient;
+                const projectId = VSS.getWebContext().project.id;
+                const teamId = VSS.getWebContext().team.id;
+                const projectName = VSS.getWebContext().project.name;
+                const teamContext = { projectId: projectId, teamId: teamId, project: "", team: ""};
+                const iteration = await getIteration();
+                const areaPath = await getUsersSavedAreaPath();
+                await setPrintHeader(iteration,areaPath);
+                await getIterations(workClient,teamContext,iteration);
+                await getWorkItemTypes(witClient,projectId);
+                await getAreaPaths(witClient,projectId,contracts,areaPath);
+                try {
+                    await displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath);
+                } catch(err) {
+                    console.log(`Error: ${err}`);
+                    removeLoader();
+                    displayPrint();
+                    alert(`An error occurred. This happens when there are no work items of the types selected returned in the query.  The error reported by the server was ${err}`);
+                }
+            });
+        });
+        async function getIteration() {
+            let iteration = '';
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            if(dataService.getValue("userIterationPath", {scopeType: "User"})) {
+                iteration = dataService.getValue("userIterationPath", {scopeType: "User"});
+            } else {
+                iteration = '@CurrentIteration';
+            }
+            return iteration;
+        }
+        function appendCountOfWorkItems(count) {
+            let workItemSelectSectionHeader = document.getElementById('workItemSelectSectionHeader');
+            let currentContent = workItemSelectSectionHeader.innerHTML;
+            let newContent = `${currentContent} with ${count} work items.`; 
+            workItemSelectSectionHeader.innerHTML = newContent;
+            return true;
+        }
+        async function getWorkItemIds(witClient,query,projectId){
+            try {
+                let queryResult = await witClient.queryByWiql(query, projectId);
+                let workItemsIdsInResult = await queryResult.workItems.map(function (wi) { return wi.id; });
+                return workItemsIdsInResult;
+            } catch(err) {
+                console.log(`Error: ${err}`);
+            }
+            
+        }
+        async function saveWorkItemTypes(){
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            let selectedWorkItemInputs = await getSelectedWorkItemTypes();
+            if(selectedWorkItemInputs) {
+                await dataService.setValue("userWorkItems", selectedWorkItemInputs, {scopeType: "User"});
+                console.log(`User's work items are now set to ${selectedWorkItemInputs}`);
+                if(await dataService.getValue("userWorkItems", {scopeType: "User"})) {
+                    let savedWorkItems = dataService.getValue("userWorkItems", {scopeType: "User"});
+                    location.reload(true);
+                    return true;
+                } else {
+                    console.log(`User has not selected any work item types to include.`);
+                    return false;
+                };
+            } else {
+                    console.log(`User has not selected any work item types to include.`);
+                    return false;
+            };
+        }
+        async function getSelectedWorkItemTypes() {
+            const inputs = document.getElementsByTagName('input');
+            let inputsArray = [];
+            const inputsLength = inputs.length;
+            if(inputsLength && inputsLength > 0){
+                for (let x = 0; x < inputsLength; x++) {
+                    if(inputs[x].checked) {
+                        inputsArray.push(inputs[x].value);
+                    } else {
+                        console.log(`Not pushing ${inputs[x].value}`);
+                    }
+                }
+                let inputsArrayLength = inputsArray.length;
+                if(inputsArrayLength > 0){
+                    return inputsArray;
+                } else {
+                    alert('You must select at least one work item type.');
+                    return false;
+                }
+            } else {
+                alert('You must select at least one work item type.');
+                return false;
+            }
+            
+        }
+        async function checkForSavedWorkItemTypes() {
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            if(await dataService.getValue("userWorkItems", {scopeType: "User"})) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        async function getUsersSavedWorkItemTypes() {
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            const usersSavedWorkItemTypes = await dataService.getValue("userWorkItems", {scopeType: "User"});
+            return usersSavedWorkItemTypes;
+        }
+        function checkIfStringIsInArray(array,string) {
+            return array.indexOf(string) !== -1;   
+        }
+        function insertWorkItemSelectHeader() {
+            let workItemSelectSectionHeader = document.createElement('h2');
+            workItemSelectSectionHeader.innerHTML = 'Select work items for printing';
+            let workItemSelectDiv = document.getElementById("workItemTypes");
+            workItemSelectDiv.insertBefore(workItemSelectSectionHeader,workItemSelectDiv.childNodes[0]);
+            return true;
+        }
+        async function getWorkItemTypes(witClient,projectId) {
+            insertWorkItemSelectHeader();
+            const workItemTypes = await witClient.getWorkItemTypes(projectId);
+            const numberOfWorkItemTypes = workItemTypes.length;
+            const userHasSavedWorkItemTypes = await checkForSavedWorkItemTypes();
+            let usersSavedWorkItemTypes = false;
+            if(userHasSavedWorkItemTypes) {
+                usersSavedWorkItemTypes = await getUsersSavedWorkItemTypes();
+            } 
+            // Default work item list - all checked
+            for(let x = 0; x < numberOfWorkItemTypes; x++) {
+                let name = workItemTypes[x].name;
+                let input = document.createElement('input');
+                input.setAttribute('type','checkbox');
+                input.setAttribute('name', name);
+                input.setAttribute('value',name);
+                input.setAttribute('selected',true);
+                if(userHasSavedWorkItemTypes) {
+                    if(checkIfStringIsInArray(usersSavedWorkItemTypes,name)) {
+                        input.setAttribute('checked','checked');
+                    } else {
+                        console.log(`${name} is not in the users saved work item types.`)
+                    }
+                } else {
+                    input.setAttribute('checked','checked'); // Default is the user hasn't got saved types
+                }
+                let label = document.createElement('label');
+                label.setAttribute('for',name);
+                label.innerHTML = ' ' + name;
+                let linebreak = document.createElement('br');
+                document.getElementById('workItemTypes').appendChild(input);
+                document.getElementById('workItemTypes').appendChild(label);
+                document.getElementById('workItemTypes').appendChild(linebreak);
+            }
+            addUpdateButton();
+            return true;
+        }
+        function addUpdateButton() {
+            let div = document.getElementById('workItemTypes');
+            let button = document.createElement('button');
+            button.setAttribute('type','button');
+            button.innerHTML = 'Update work items';
+            button.id = 'updateButton';
+            button.addEventListener ("click", function () { saveWorkItemTypes(); return false;});
+            div.appendChild(button);
+        } 
+        async function getWorkItemDetails(witClient,workItemIds,contracts){
+            const workItemDetails = await witClient.getWorkItems(workItemIds,null,null,contracts.WorkItemExpand.Relations);
+            return workItemDetails;
+        }
+        async function reset() {
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            // Set value in user scope
+            await dataService.setValue("userIterationPath", '@CurrentIteration', {scopeType: "User"});
+            await dataService.setValue("userWorkItems", null, {scopeType: "User"});
+            await dataService.setValue('userAreaPath', null, {scopeType: 'User'});
+            location.reload(true);
+        }
+        function insertAreaPathSectionHeader() {
+            let areaPathSectionHeader = document.createElement('h2');
+            areaPathSectionHeader.innerHTML = 'Select area path for printing';
+            let areaPathSectionDiv = document.getElementById('areaPaths');
+            areaPathSectionDiv.insertBefore(areaPathSectionHeader,areaPathSectionDiv.childNodes[0]);
+            return true;
+        }
+        async function getAreaPaths(witClient,projectId,contracts,areaPath) {
+            let areaPathsArray = [];
+            const userHasSavedAreaPath = checkForSavedAreaPath();
+            let usersSavedAreaPath = false;
+            if(userHasSavedAreaPath) {
+                usersSavedAreaPath = await getUsersSavedAreaPath();
+            }
+            const areaPaths = await witClient.getClassificationNode(projectId,contracts.TreeStructureGroup.Areas,null,4);
+            if(areaPaths != undefined && areaPaths.hasChildren && areaPaths.children.length > 0) {
+                const areaPathsLength = areaPaths.children.length;
+                let ul = document.getElementById('areaPathNames');
+                for(let i = 0; i < areaPathsLength; i++ ) {
+                    let parentAreaPath = areaPaths.name;
+                    let areaPathName = areaPaths.children[i].name;
+                    let fullAreaPath = parentAreaPath + '\\' + areaPathName;
+                    let li = document.createElement('li');
+                    let a = document.createElement('a');
+                    a.textContent = fullAreaPath;
+                    a.title = areaPathName;
+                    a.id = fullAreaPath;
+                    a.href = '#';
+                    a.onclick = function() {
+                        let linkId = this.getAttribute('id');
+                        // Get data service
+                        VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
+                            // Set value in user scope
+                            dataService.setValue('userAreaPath', linkId, {scopeType: 'User'}).then(function(linkId) {
+                                console.log(`User's selected area path is now ${linkId}`);
+                            });
+                        });
+                        location.reload(true); // setting true forces the browser to GET again, rather than refreshing from cache
+                        return false;
+                    }
+                    if(userHasSavedAreaPath) {
+                        if(usersSavedAreaPath == fullAreaPath) {
+                            a.textContent += ' (Selected)' ;
+                            a.classList.add('embolden')
+                        }
+                    }
+                    li.appendChild(a);
+                    ul.appendChild(li);
+               }
+               await insertAreaPathSectionHeader();
+            }
+        }
+        async function checkForSavedAreaPath() {
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            if(await dataService.getValue('userAreaPath', {scopeType: 'User'})) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        async function getUsersSavedAreaPath() {
+            let usersSavedAreaPath = '';
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            if(dataService.getValue("userAreaPath", {scopeType: "User"})) {
+                usersSavedAreaPath = await dataService.getValue("userAreaPath", {scopeType: "User"});
+                console.log(`Users saved area path is ${usersSavedAreaPath}`);
+                return usersSavedAreaPath;
+            } else {
+                return false;
+            }
+        }
+        function triggerPrint() {
+            window.focus();
+            window.print();
+        }
+        async function getParent(witClient,workItemDetails,id,x) {
+            if (workItemDetails[x].relations) { 
+                try {
+                    const { url }  =  await workItemDetails[x].relations.find(({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse');
+                    if(url) {
+                        const parentId = url.split('/').slice(-1)[0];
+                        const workItemDetails = await witClient.getWorkItem(parentId,['System.Title']);
+                        const parentWorkItemTitleString = workItemDetails.fields['System.Title'];
+                        let div = document.createElement('div');
+                        div.setAttribute('class','parent');
+                        div.innerHTML = `<span class="parent-id">${parentId}</span><span class="parent-name"> ${parentWorkItemTitleString}</span>`;
+                        document.getElementById(id).appendChild(div);
+                    } else {
+                        console.log('An error occurred.');
+                    }
+                } catch (err) {
+                    console.log(err);
+                }
+            } else {
+                console.log(`No relations`);
+            }
+        }
+        function removeLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+        function displayMain() {
+            document.getElementById('main').style.display = 'inline';
+        }
+        async function displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath) {
+            let sheetCount = 0;
+            let iterationChunk = '';
+            let queryString = 'SELECT [System.Id] FROM WorkItems WHERE ';
+            if(iteration != '@CurrentIteration') {
+                iterationChunk = `[System.IterationPath] = '${iteration}' `;
+            } else {
+                iterationChunk = `[System.IterationPath] = ${iteration} `;
+            }
+            queryString = queryString + iterationChunk;
+            const userHasSavedWorkItemsTypes = await checkForSavedWorkItemTypes();
+            if(userHasSavedWorkItemsTypes){
+                let usersSavedWorkItemTypes = await getUsersSavedWorkItemTypes();
+                let workItemChunk = '';
+                let workItemsQueryStringResultLength = usersSavedWorkItemTypes.length;
+                for(let i = 0; i < workItemsQueryStringResultLength; i++){
+                    let type = usersSavedWorkItemTypes[i];
+                    if(i === 0) {
+                        workItemChunk += ' AND (';
+                    }
+                    workItemChunk += `[System.WorkItemType] = '${type} '`;
+                    if((i+1) == workItemsQueryStringResultLength){
+                        workItemChunk += ')';
+                    } else {
+                        workItemChunk += ' OR ';
+                    }
+                }
+                queryString = queryString + workItemChunk;
+            } 
+            if(areaPath) {
+                const areaPathQueryString = ` AND [System.AreaPath] = '${areaPath}'`;
+                queryString = queryString + areaPathQueryString;
+            }
+            let query = { 'query' : `${queryString}`}
+            const workItemIds = await getWorkItemIds(witClient,query,projectId);
+            const workItemDetails = await getWorkItemDetails(witClient,workItemIds,contracts);
+            const numberOfWorkItems = workItemIds.length;
+            for(let x = 0; x < numberOfWorkItems; x++) {
+                let id = workItemDetails[x].id;
+                let type = workItemDetails[x].fields['System.WorkItemType'];
+                let title = workItemDetails[x].fields['System.Title'];
+                let styleType = type.replace(/\s+/g, '-').toLowerCase();
+                if(x === 0) {
+                    let section = document.createElement('section');
+                    section.className = 'sheet padding-10mm';
+                    var sheetId = 'sheet' + sheetCount;
+                    section.id = sheetId;
+                    document.getElementById('main').appendChild(section);
+                } else if (x % 15 === 0 && x != 0) {
+                    let section = document.createElement('section');
+                    section.className = 'sheet padding-10mm';
+                    var sheetId = 'sheet' + sheetCount;  
+                    section.id = sheetId;
+                    document.getElementById('main').appendChild(section);
+                }
+                let div = document.createElement('div');
+                let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
+                div.className = className;
+                div.setAttribute('id', id);
+                let cardCount = x + 1;
+                const stringParts = [];
+                stringParts.push(`<div class="type truncate">${type}</div><div class="id">${id}</div><div class="title">${title}</div>`);
+                if(cardCount % 15 === 0 && x != 0) {
+                    stringParts.push('</section>');
+                    sheetCount++;
+                } 
+                while (div.hasChildNodes()) {
+                    div.firstChild.remove();
+                }
+                let stringToInsert = stringParts.join('');
+                div.insertAdjacentHTML('beforeend', stringToInsert);
+                document.getElementById(sheetId).appendChild(div);
+                await getParent(witClient,workItemDetails,id,x);
+            }
+            appendCountOfWorkItems(numberOfWorkItems);
+            removeLoader();
+            displayPrint();
+            displayMain();
+            triggerPrint();
+        }
+        function setPrintHeader(iteration,areaPath) {
+            const printHeader = document.createElement('h2');
+            printHeader.innerHTML = `Printing selected work item types in ${iteration} and ${areaPath}`;
+            printHeader.id = 'workItemSelectSectionHeader';
+            const div = document.getElementById('printHeader');
+            div.appendChild(printHeader);
+        }
+        async function getIterations(workClient,teamContext,iteration) {
+            let iterationPath = '';
+            let teamIterations = await workClient.getClient().getTeamIterations(teamContext);
+            let ul = document.getElementById('iterationPaths');
+            for(let x = 0; x < teamIterations.length; x++) {
+                let iterationPathId = teamIterations[x].id;
+                iterationPath = teamIterations[x].path;
+                let startDate = teamIterations[x].attributes['startDate'];
+                let endDate = teamIterations[x].attributes['finishDate'];
+                let todayDate = new Date();
+                let li = document.createElement('li');
+                let a = document.createElement('a');
+                let linkText = '';
+                if(todayDate > startDate && todayDate < endDate){
+                    linkText = document.createTextNode(iterationPath + ' (Active iteration)');
+                    a.appendChild(linkText);
+                } else {
+                    linkText = document.createTextNode(iterationPath);
+                    a.appendChild(linkText);
+                    a.href = '#';
+                }
+                a.title = iterationPath;
+                a.id = iterationPath;
+                a.onclick = function() {
+                    let linkId = this.getAttribute('id');
+                    // Get data service
+                    VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
+                        // Set value in user scope
+                        dataService.setValue('userIterationPath', linkId, {scopeType: 'User'}).then(function(linkId) {
+                            console.log(`User's selected iteration path is now ${linkId}`);
+                        });
+                    });
+                    location.reload(true); // setting true forces the browser to GET again, rather than refreshing from cache
+                    return false;
+                }
+                li.appendChild(a);
+                ul.appendChild(li);
+                if(iterationPath === iteration) {
+                    a.textContent += ' (Selected)' ;
+                    a.classList.add('embolden')
+                }
+            }
+            insertIterationSelectHeader();
+        }
+        function insertIterationSelectHeader() {
+            let iterationSelectSectionHeader = document.createElement('h2');
+            iterationSelectSectionHeader.innerHTML = 'Select iteration path for printing';
+            let iterationSelectDiv = document.getElementById('iterations');
+            iterationSelectDiv.insertBefore(iterationSelectSectionHeader,iterationSelectDiv.childNodes[0]);
+        }
+        function displayPrint() {
+            document.getElementById('print').style.display = 'inline';
+        }
+        VSS.register('backlogTabObject', {
             pageTitle: function(state) {
                 return false;
             },
@@ -22,162 +444,49 @@
                 return false;
             }
         });
-        VSS.require([
-                "VSS/Service",
-                "TFS/WorkItemTracking/RestClient",
-                "TFS/WorkItemTracking/Contracts"
-                ]);
-        VSS.ready(function () {           
-            VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
-                var collection = 'board-cards-ext-collection';
-                var configDoc = 'board-cards-config';
-                dataService.getDocument(collection,configDoc).then(function(doc) {
-                },function(err) {
-                    if(err.status == '404') {
-                        defaultConfig = {
-                            "id": configDoc,
-                            "user-story": "SlateBlue",
-                            "task": "Gold",
-                            "bug": "Tomato",
-                            "epic": "DarkOrange",
-                            "feature": "LightGreen",
-                            "issue": "SeaGreen"
-                        }
-                        dataService.setDocument(collection,defaultConfig).then(function(doc) {
-                            location.reload();
-                        });
-                    } else {
-                        alert("The extension was unable to find or create the config document.  The error has been written to the browser console.");
-                    }
-                })
-            })     
-            VSS.require([
-                "VSS/Service",
-                "TFS/WorkItemTracking/RestClient",
-                "TFS/WorkItemTracking/Contracts",
-                "TFS/Work/RestClient"
-                ], 
-                    async function (VSS_Service, TFS_WorkItemTracking_RestClient, TFS_WorkItemTracking_Contracts, TFS_Work_RestClient) {
-                    let client = TFS_Work_RestClient.getClient();
-                    let context = VSS.getWebContext();
-                    let teamContext = { projectId: context.project.id, teamId: context.team.id, project: "", team: "" };
-                    let ul = document.getElementById("iterationPaths");
-                    let teamIterations = client.getTeamIterations(teamContext).then(function(iterations) {
-                        let configurationDiv = document.getElementById('configuration');
-                        for(let x = 0; x < iterations.length; x++) {
-                            let iterationPathId = iterations[x].id;
-                            let iterationPath = iterations[x].path;
-                            let startDate = iterations[x].attributes['startDate'];
-                            let endDate = iterations[x].attributes['finishDate'];
-                            let todayDate = new Date();
-                            let li = document.createElement("li");
-                            let a = document.createElement('a');
-                            let linkText = '';
-                            if(todayDate > startDate && todayDate < endDate){
-                                linkText = document.createTextNode(iterationPath + " (Active iteration)");
-                            } else {
-                                linkText = document.createTextNode(iterationPath);
-                            }
-                            a.appendChild(linkText);
-                            a.title = iterationPath;
-                            a.href = "'#'";
-                            a.onclick = function() {                        
-                                // Get data service
-                                VSS.getService(VSS.ServiceIds.ExtensionData).then(function(dataService) {
-                                    // Set value in user scope
-                                    dataService.setValue("userIterationPath", iterationPath, {scopeType: "User"}).then(function(value) {
-                                        console.log("Iteration path is now " + value);
-                                    });
-                                });
-                                return false;
-                            }
-                            li.appendChild(a);
-                            ul.appendChild(li);
-
-                        }
-                    });
-
-                    var witClient = VSS_Service.getCollectionClient(TFS_WorkItemTracking_RestClient.WorkItemTrackingHttpClient);  
-                    var projectId = context.project.id;
-                    var project = context.project.name;
-                    var sheetCount = 0;
-                    var query = {'query': 'SELECT [System.Id] FROM WorkItems WHERE [System.IterationPath] = @CurrentIteration'};
-                    let queryResult = await witClient.queryByWiql(query, projectId);
-                    let workItemIds = await queryResult.workItems.map(function (val) { return val.id; });
-                    let workItemDetails = await witClient.getWorkItems(workItemIds,undefined,undefined,4);
-                    for(var x = 0; x < workItemDetails.length; x++) {
-                        let id = workItemDetails[x].id;
-                        let title = workItemDetails[x].fields['System.Title'];
-                        let type = workItemDetails[x].fields['System.WorkItemType'];
-                        let styleType = type.replace(/\s+/g, '-').toLowerCase();
-                        
-                        if(x === 0) {
-                            let section = document.createElement('section');
-                            section.className = 'sheet padding-10mm';
-                            var sheetId = 'sheet' + sheetCount;
-                            section.id = sheetId;
-                            document.getElementById("main").appendChild(section);
-                        } else if (x % 15 === 0 && x != 0) {
-                            let section = document.createElement('section');
-                            section.className = 'sheet padding-10mm';
-                            var sheetId = 'sheet' + sheetCount;  
-                            section.id = sheetId;
-                            document.getElementById("main").appendChild(section);
-                        }
-
-                        let div = document.createElement('div');
-                        let className = 'workItem ' + styleType + ' ' + id + ' ' + x;
-                        div.className = className;
-                        let cardCount = x + 1;
-                        const stringParts = [];
-                        stringParts.push(`<div class="type truncate">${type}</div><div class="id">${id}</div><div class="title">${title}</div>`);
-                        if (workItemDetails[x].relations) { 
-                            const { url }  = 
-                            workItemDetails[x].relations.find(
-                                ({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse'
-                            );
-                            if(url){
-                                
-                                const parentId = url.split('/').slice(-1)[0];
-                                const { fields } = await witClient.getWorkItem(parentId, ['System.Title']);
-                                console.log(url);
-                                const parentWorkItemTitleString = await fields['System.Title'];
-                                stringParts.push(`<div class="parent"><span class="parent-id">${parentId}</span><span class="parent-name"> ${parentWorkItemTitleString}</span></div>`) 
-                            }
-                            
-                        }
-                        if(cardCount % 15 === 0 && x != 0) {
-                            stringParts.push('</section>');
-                            sheetCount++;
-                        } 
-                        while (div.hasChildNodes()) {
-                            div.firstChild.remove();
-                        }
-                        let stringToInsert = stringParts.join("");
-                        div.insertAdjacentHTML("beforeend", stringToInsert);
-                        document.getElementById(sheetId).appendChild(div);      
-                    }
-                    
-                    window.focus();
-                    window.print();
-                })
-            })
         VSS.notifyLoadSucceeded();
     </script>
+    <link rel="stylesheet" media="print" href="css/print.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
     <link rel="stylesheet" media="all" href="css/cards.css">
     <link rel="stylesheet" media="screen" href="css/screen.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/paper-css/0.4.1/paper.min.css">
-    <link rel="sytlesheet" media="print" href="css/print.css">
     <style>@page { size: A4 }</style>
 </head>
 <body class="board-cards a4">
-    <header id="header">
-        <div id="configuration">
-            <ul id="iterationPaths">
+    <header id="header" class="no-print">
+        <h1>Azure board cards</h2>
+        <div id="guidance">
+            <p>When all work items have loaded, the browser will trigger a print dialog.  This may take a little time depending on how many work items are included.</p>
+            <p>The following preferences are set per user, and can be <a href="#" id="resetLinkInGuidance" title="Reset defaults" onclick="reset();return false;">reset to defaults</a> when no longer required.</p>
+            <div id="loader">
+            </div>
+        </div>
+        <div id="configuration" class="no-print">
+            <div id="iterations">
+                <ul id="iterationPaths">
+                </ul>
+            </div>
+        </div>
+        <div id="workitemConfiguration" class="no-print">
+            <div id="workItemTypes">
+            </div>
+        </div>
+        <div id="areaPathConfiguration" class="no-print">
+            <div id="areaPaths">
+                <ul id="areaPathNames">
 
-            </ul>
-            <a href="#" onclick="window.focus();window.print();">Print</a>
+                </ul>
+            </div>
+        </div>
+        <div id="contact" class="no-print">
+            <p>If you have any problems, please report them by <a target="_blank" href="https://github.com/nick-myers/azure-devops-board-cards/issues">raising a new Github issue</a>.</p>
+        </div>
+        <div id="print" class="no-print" style="display:none;">
+            <p>[ <a href="#" onclick="triggerPrint(); return false;">Print</a> - <a href="#" onclick="reset(); return false;">Restore defaults</a> ]</p>
+        </div>
+        <div id="printHeader" class="no-print">
+
         </div>
     </header>
     <main id="main">
