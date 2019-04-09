@@ -2,7 +2,7 @@ body.board-cards {
     overflow: auto;
 }
 .workItem {
-    height:170px;
+    height:200px;
 }
 div.type {
     float: left;
@@ -61,7 +61,6 @@ header {
     width: 100%;
     text-align: center;
     margin-bottom: 20px;
-    font-size: 1.3em;
 }
 #updateButton {
     margin-top: 20px;
@@ -79,8 +78,8 @@ h1 {
 label {
     line-height: 1.6em;
 }
-#areaPaths, #iterations, #workItemTypes {
-    font-size: 1.2em;
+#areaPaths, #iterations, #workItemTypes, #print {
+    font-size: 1.4em;
 }
 #guidance p {
     font-size: 1.4em;
