@@ -1,14 +1,14 @@
 .workItem {
     border: 0.5px dashed grey;
-    width: 30%;
-    height:50mm;
+    width: 50%;
+    height:70mm;
     float: left;
     overflow: hidden;
     padding: 4px;
     padding-top: 6px;
     padding-left: 7px;
     padding-right: 7px;
-    font-size: 1.1em;
+    font-size: 3.3em;
     margin: 5px;
 }
 .truncate {
