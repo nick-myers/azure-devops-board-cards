@@ -66,7 +66,10 @@
                 nextCardSize = 'small';
                 linkString = `Large - 2 x 3 per A4 sheet`;
             } else {
-                consoleLog(`User's selected card size was not 'small' or 'large'.  selectedCardSize: ${selectedCardSize}`);
+                selectedCardSize = 'small';
+                linkString = `Small - 3 x 5 per A4 sheet`;
+                nextCardSize = 'large';
+                consoleLog(`User's selected card size was not 'small' or 'large'.`);
             }
             let ul = document.getElementById('cardSize');
             let li = document.createElement('li');
