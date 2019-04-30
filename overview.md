@@ -9,6 +9,13 @@ I'm not a professional web developer, I'm a delivery manager who works with soft
 
 This is very much a side project; I think it's useful enough to make available for others to use.  
 
+## Major version update - version 3.0 released on 30th April 2019
+
+This version includes the ability to select "small" or "large" cards for printing.
+
+* Small - 3 x 5 cards (15 per A4 sheet)
+* Large - 2 x 3 cards (6 per A4 sheet)
+
 ## Major version update - version 2.0 released on 9th April 2019
 
 This version has been overhauled to try address some of the issues users were running into and provide some of the features requested. 
