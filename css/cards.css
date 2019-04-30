@@ -1,22 +1,35 @@
 .workItem {
     border: 0.5px dashed grey;
-    width: 30%;
-    height:50mm;
     float: left;
     overflow: hidden;
     padding: 4px;
     padding-top: 6px;
     padding-left: 7px;
     padding-right: 7px;
-    font-size: 1.1em;
     margin: 5px;
+}
+.small {
+    width: 30%;
+    height:50mm;
+    font-size: 1.4em;
+}
+.large {
+    width: 47%;
+    height:85mm;
+    font-size: 2.0em;
+    text-overflow: clip;
+}
+.large .title {
+    font-size: 1.8em;
+    line-height: 1.15em;
 }
 .truncate {
     width: 75%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    }
+}
+
 .truncate-parent-title {
     width: 75%;
     white-space: nowrap;
@@ -27,6 +40,7 @@ div.parent {
     padding: 5px;
     border: 1px dashed grey;
     color: darkslategrey;
+    font-size: 0.8em;
 }
 div.type {
     float: left;
@@ -36,8 +50,8 @@ div.id {
 }
 div.title {
     clear: both;
-    margin: 10px;
-    padding-top: 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 div#config {
     display: none;
@@ -150,10 +164,11 @@ div#config {
 .spike .type, .spike .id {
     color: maroon;
 }
-.parent {
-    font-size: 0.8em;
-}
+
 span.parent-id {
     margin-right: 3px; 
     font-weight: bold;
+}
+html {
+    line-height: normal;
 }

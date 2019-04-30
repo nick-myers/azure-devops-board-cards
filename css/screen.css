@@ -1,9 +1,6 @@
 body.board-cards {
     overflow: auto;
 }
-.workItem {
-    height:200px;
-}
 div.type {
     float: left;
 }
@@ -12,9 +9,6 @@ div.id {
 }
 div.title {
     clear: both;
-    margin: 10px;
-    padding-top: 10px;
-    font-size: 1.2em;
 }
 div#config {
     margin: 20px;
@@ -78,7 +72,7 @@ h1 {
 label {
     line-height: 1.6em;
 }
-#areaPaths, #iterations, #workItemTypes, #print {
+#areaPaths, #iterations, #workItemTypes, #print, #cardSizeOptions {
     font-size: 1.4em;
 }
 #guidance p {
