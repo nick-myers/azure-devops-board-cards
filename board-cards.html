@@ -10,39 +10,139 @@
             usePlatformScripts: true, 
             usePlatformStyles: true
         });
-        VSS.ready(async function () {         
-            VSS.require(["VSS/Service","TFS/WorkItemTracking/RestClient","TFS/WorkItemTracking/Contracts","TFS/Work/RestClient"], 
+        VSS.ready(async function () {
+            consoleLog(`VSS ready`);
+            consoleLog(`Registering backlog tab object`)
+            VSS.register('backlogTabObject', {
+                pageTitle: function(state) {
+                    return false;
+                },
+                updateContext: function(tabContext) {                            
+                },
+                isInvisible: function(state) {
+                    return false;
+                },
+                isDisabled: function(state) {
+                    return false;
+                }
+            });
+            consoleLog(`Checking whether document is ready`);
+            checkReady();
+        });
+        VSS.notifyLoadSucceeded();
+        function checkReady() {
+            consoleLog(`checkReady()`);
+            if (document.readyState != 'complete') {
+                consoleLog(`Document is not ready, will try again in 100ms`);
+                setTimeout(checkReady, 100);
+            } else if (document.readyState === 'complete') {
+                consoleLog(`Document readyState = complete`);
+                consoleLog(`Requiring VSS and TFS clients`);
+                VSS.require(["VSS/Service","TFS/WorkItemTracking/RestClient","TFS/WorkItemTracking/Contracts","TFS/Work/RestClient"], 
                 async function (VSS_Service, TFS_Wit_WebApi,TFS_Contracts,TFS_WorkClient) {
-                    const witClient = await VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
-                    const contracts = TFS_Contracts;
-                    const workClient = TFS_WorkClient;
-                    const projectId = await VSS.getWebContext().project.id;
-                    const teamId = await VSS.getWebContext().team.id;
-                    const projectName = await VSS.getWebContext().project.name;
-                    const teamContext = { projectId: projectId, teamId: teamId, project: "", team: ""};
-                    const iteration = await getIteration();
-                    const areaPath = await getUsersSavedAreaPath();
-                    await setPrintHeader(iteration,areaPath);
-                    await getIterations(workClient,teamContext,iteration);
-                    await getWorkItemTypes(witClient,projectId);
-                    await getAreaPaths(witClient,projectId,contracts,areaPath);
-                    const selectedCardSize = await displayPrintSizeOptions();
-                    try {
-                        await displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath,selectedCardSize);
-                    } catch(err) {
-                        consoleLog(`Error: ${err}`);
-                        await removeLoader();
-                        await displayPrint();
-                        alert(`An error occurred. This happens when there are no work items of the types selected returned in the query.  The error reported by the server was ${err}`);
+                    consoleLog(`Main function started`)
+                    if (document.readyState === 'complete') {
+                        consoleLog(`Document ready state = complete`)
+                        const witClient = await VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
+                        const contracts = TFS_Contracts;
+                        const workClient = TFS_WorkClient;
+                        const projectId = await VSS.getWebContext().project.id;
+                        const teamId = await VSS.getWebContext().team.id;
+                        const projectName = await VSS.getWebContext().project.name;
+                        const teamContext = { projectId: projectId, teamId: teamId, project: "", team: ""};
+                        const iteration = await getIteration();
+                        const areaPath = await getUsersSavedAreaPath();
+                        await setPrintHeader(iteration,areaPath);
+                        await getIterations(workClient,teamContext,iteration);
+                        await getWorkItemTypes(witClient,projectId);
+                        await getAreaPaths(witClient,projectId,contracts,areaPath);
+                        const selectedCardSize = await displayPrintSizeOptions();
+                        await displayFieldOptions();
+                        try {
+                            consoleLog(`Trying to displayWorkItems()`)
+                            await displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath,selectedCardSize);
+                        } catch(err) {
+                            consoleLog(`Error: ${err}`);
+                            await removeLoader();
+                            await displayPrint();
+                            alert(`An error occurred. This happens when there are no work items of the types selected returned in the query.  The error reported by the server was ${err}`);
+                        }
                     }
                 });
-            });
+            };
+        }
         let consoleMessageCount = 1;
+        async function getUserFields() {
+            consoleLog(`getUserFields()`)
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            const userSelectedFields = await dataService.getValue("userFields", {scopeType: "User"});
+            if(userSelectedFields) {
+                if(userSelectedFields === '') {
+                    const userFields = await setInitialUserFields();
+                    return userFields;
+                } else {
+                    return userSelectedFields;
+                }
+            } else {
+                const userFields = await setInitialUserFields();
+                return userFields;
+            }
+        }
+        async function setInitialUserFields() {
+            consoleLog(`setInitialUserFields()`)
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            const initialFieldsJson = 
+            `
+            {
+                "fields": [
+                    { 
+                        "name": "Original estimate",
+                        "selected": false
+                    },
+                    {
+                        "name": "Assigned to",
+                        "selected": false
+                    }
+                ]
+            }
+            `
+            await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"});
+            if(await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"})) {
+                let userFields = await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"});
+                consoleLog(`User fields have been initialised`);
+                consoleLog(`Contents of user fields after initiatlisation is:`);
+                console.dir(userFields)
+                return userFields;
+            } else {
+                return false;
+            }
+
+        }
+        async function displayFieldOptions(){
+            consoleLog(`displayFieldOptions()`);
+            let fieldsSectionHeader = document.createElement('h2');
+            fieldsSectionHeader.innerHTML = 'Select additional fields to include';
+            let fieldsSectionDiv = document.getElementById('fieldOptions');
+            fieldsSectionDiv.insertBefore(fieldsSectionHeader,fieldsSectionDiv.childNodes[0]);
+            const userFields = await getUserFields();
+            if(userFields) {
+                consoleLog(`User has fields to display`);
+                const numberOfUserFields = userFields.length;
+                consoleLog(numberOfUserFields);
+                for(let x = 0; x < numberOfUserFields; x++) {
+                    
+                }
+            } else {
+                consoleLog(`userFields is not set`);
+            }
+            
+        }
         async function getCardSize() {
+            consoleLog(`getCardSize()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             let userCardSize = await dataService.getValue("userCardSize", {scopeType: "User"});
             let cardSize = '';
-            if(userCardSize === undefined) {
+            if(userCardSize === undefined || userCardSize === '') {
                 cardSize = 'small';
                 return cardSize;
             } else {
@@ -52,6 +152,7 @@
             }
         }
         async function displayPrintSizeOptions() {
+            consoleLog(`displayPrintSizeOptions()`);
             let cardSizeSectionHeader = document.createElement('h2');
             cardSizeSectionHeader.innerHTML = 'Select card size for printing';
             let cardSizeSectionDiv = document.getElementById('cardSizeOptions');
@@ -119,6 +220,7 @@
             return selectedCardSize;
         }
         async function getIteration() {
+            consoleLog(`getIteration()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             let iterationExistsCheck = await dataService.getValue("userIterationPath", {scopeType: "User"});
             if(iterationExistsCheck === undefined) {
@@ -130,6 +232,7 @@
             }
         }
         function appendCountOfWorkItems(count) {
+            consoleLog(`appendCountOfWorkItems()`);
             let workItemSelectSectionHeader = document.getElementById('workItemSelectSectionHeader');
             let currentContent = workItemSelectSectionHeader.innerHTML;
             let newContent = `${currentContent} with ${count} work items.`; 
@@ -137,6 +240,7 @@
             return true;
         }
         async function getWorkItemIds(witClient,query,projectId) {
+            consoleLog(`getWorkItemIds()`);
             try {
                 let queryResult = await witClient.queryByWiql(query, projectId);
                 let workItemsIdsInResult = await queryResult.workItems.map(function (wi) { return wi.id; });
@@ -146,6 +250,7 @@
             }
         }
         async function saveWorkItemTypes(){
+            consoleLog(`saveWorkItemTypes()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             let selectedWorkItemInputs = await getSelectedWorkItemTypes();
             if(selectedWorkItemInputs) {
@@ -165,6 +270,7 @@
             };
         }
         async function getSelectedWorkItemTypes() {
+            consoleLog(`getSelectedWorkItemTypes()`);
             const inputs = document.getElementsByTagName('input');
             let inputsArray = [];
             const inputsLength = inputs.length;
@@ -189,6 +295,7 @@
             }
         }
         async function checkForSavedWorkItemTypes() {
+            consoleLog(`checkForSavedWorkItemTypes()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             if(await dataService.getValue("userWorkItems", {scopeType: "User"})) {
                 return true;
@@ -197,6 +304,7 @@
             }
         }
         async function getUsersSavedWorkItemTypes() {
+            consoleLog(`getUsersSavedWorkItemTypes()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             const usersSavedWorkItemTypes = await dataService.getValue("userWorkItems", {scopeType: "User"});
             return usersSavedWorkItemTypes;
@@ -205,6 +313,7 @@
             return array.indexOf(string) !== -1;   
         }
         function insertWorkItemSelectHeader() {
+            consoleLog(`insertWorkItemSelectHeader()`);
             let workItemSelectSectionHeader = document.createElement('h2');
             workItemSelectSectionHeader.innerHTML = 'Select work item types for printing';
             let workItemSelectDiv = document.getElementById("workItemTypes");
@@ -212,6 +321,7 @@
             return true;
         }
         async function getWorkItemTypes(witClient,projectId) {
+            consoleLog(`getWorkItemTypes()`);
             insertWorkItemSelectHeader();
             const workItemTypes = await witClient.getWorkItemTypes(projectId);
             const numberOfWorkItemTypes = workItemTypes.length;
@@ -245,10 +355,11 @@
                 document.getElementById('workItemTypes').appendChild(label);
                 document.getElementById('workItemTypes').appendChild(linebreak);
             }
-            addUpdateButton();
+            await addUpdateButton();
             return true;
         }
-        function addUpdateButton() {
+        async function addUpdateButton() {
+            consoleLog(`addUpdateButton()`);
             let div = document.getElementById('workItemTypes');
             let button = document.createElement('button');
             button.setAttribute('type','button');
@@ -258,20 +369,24 @@
             div.appendChild(button);
         } 
         async function getWorkItemDetails(witClient,workItemIds,contracts){
+            consoleLog(`getWorkItemDetails()`);
             const workItemDetails = await witClient.getWorkItems(workItemIds,null,null,contracts.WorkItemExpand.Relations);
             return workItemDetails;
         }
         async function reset() {
+            consoleLog(`reset()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             // Set value in user scope
             await dataService.setValue("userIterationPath", '@CurrentIteration', {scopeType: "User"});
             await dataService.setValue("userWorkItems", '', {scopeType: "User"});
             await dataService.setValue('userAreaPath', '', {scopeType: 'User'});
             await dataService.setValue('userCardSize', '', {scopeType: 'User'})
+            await dataService.setValue("userFields", '', {scopeType: "User"});
             location.reload(true);
             return true;
         }
         function insertAreaPathSectionHeader() {
+            consoleLog(`insertAreaPathSectionHeader()`);
             let areaPathSectionHeader = document.createElement('h2');
             areaPathSectionHeader.innerHTML = 'Select area path for printing';
             let areaPathSectionDiv = document.getElementById('areaPaths');
@@ -279,6 +394,7 @@
             return true;
         }
         async function getAreaPaths(witClient,projectId,contracts,areaPath) {
+            consoleLog(`getAreaPaths()`);
             let areaPathsArray = [];
             const userHasSavedAreaPath = checkForSavedAreaPath();
             let usersSavedAreaPath = false;
@@ -324,6 +440,7 @@
             }
         }
         async function checkForSavedAreaPath() {
+            consoleLog(`checkForSavedAreaPath()`);
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
             if(await dataService.getValue('userAreaPath', {scopeType: 'User'})) {
                 return true;
@@ -332,13 +449,14 @@
             }
         }
         async function getUsersSavedAreaPath() {
+            consoleLog(`getUsersSavedAreaPath()`);
             let userHasSavedAreaPath = checkForSavedAreaPath();
             if(userHasSavedAreaPath === false) {
                 return false;
             } else {
                 const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
                 let usersSavedAreaPath = await dataService.getValue("userAreaPath", {scopeType: "User"});
-                if(userHasSavedAreaPath === false ) {
+                if(userHasSavedAreaPath === false || usersSavedAreaPath === '') {
                     //consoleLog('User does not have a saved area path')
                     return false;
                 } else {
@@ -348,10 +466,12 @@
             }
         }
         function triggerPrint() {
+            consoleLog(`triggerPrint()`);
             window.focus();
             window.print();
         }
-        async function getParent(witClient,workItemDetails,id,x) {    
+        async function getParent(witClient,workItemDetails,id,x) {   
+            consoleLog(`getParent()`); 
             if (workItemDetails[x].relations) { 
                 try {
                     const { url }  =  await workItemDetails[x].relations.find(({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse');
@@ -369,7 +489,7 @@
                         return false;
                     }
                 } catch (err) {
-                    consoleLog(err);
+                    //consoleLog(err);
                     return false;
                 }
             } else {
@@ -378,12 +498,15 @@
             }
         }
         function removeLoader() {
+            consoleLog(`removeLoader()`); 
             document.getElementById('loader').style.display = 'none';
         }
         function displayMain() {
+            consoleLog(`displayMain()`); 
             document.getElementById('main').style.display = 'inline';
         }
         async function displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath,selectedCardSize) {
+            consoleLog(`displayWorkItems()`); 
             let sheetCount = 0;
             let iterationChunk = '';
             let queryString = 'SELECT [System.Id] FROM WorkItems WHERE ';
@@ -421,6 +544,7 @@
             let query = { 'query' : `${queryString}`}
             const workItemIds = await getWorkItemIds(witClient,query,projectId);
             const workItemDetails = await getWorkItemDetails(witClient,workItemIds,contracts);
+            
             const numberOfWorkItems = workItemIds.length;
             let divideAfter = 0;
             if(selectedCardSize === 'small'){
@@ -429,9 +553,26 @@
                 divideAfter = 6;
             }
             for(let x = 0; x < numberOfWorkItems; x++) {
+                if(x === 1) {
+                    console.dir(workItemDetails[1]);
+                }
                 let id = workItemDetails[x].id;
                 let type = workItemDetails[x].fields['System.WorkItemType'];
                 let title = workItemDetails[x].fields['System.Title'];
+                let originalEstimate = undefined;
+                let assignedTo = undefined;
+                if(workItemDetails[x].fields['Microsoft.VSTS.Scheduling.OriginalEstimate']) {
+                    originalEstimate = workItemDetails[x].fields['Microsoft.VSTS.Scheduling.OriginalEstimate'];
+                }
+                if(workItemDetails[x].fields['System.AssignedTo']) {
+                    assignedTo = workItemDetails[x].fields['System.AssignedTo'].displayName;
+                }
+                if(originalEstimate) {
+                    let yes = 'yes';
+                }
+                if(assignedTo) {
+                    let yes = 'yes';
+                }
                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
                 if(x === 0) {
                     let section = document.createElement('div');
@@ -478,6 +619,7 @@
             return true;
         }
         function setPrintHeader(iteration,areaPath) {
+            consoleLog(`setPrintHeader()`); 
             const printHeader = document.createElement('h2');
             printHeader.innerHTML = `Printing selected work item types in ${iteration}`;
             if(areaPath != '') {
@@ -488,6 +630,7 @@
             div.appendChild(printHeader);
         }
         async function getIterations(workClient,teamContext,iteration) {
+            consoleLog(`getIterations()`); 
             let teamIterations = await workClient.getClient().getTeamIterations(teamContext);
             let ul = document.getElementById('iterationPaths');
             for(let x = 0; x < teamIterations.length; x++) {
@@ -531,32 +674,20 @@
             insertIterationSelectHeader();
         }
         function insertIterationSelectHeader() {
+            consoleLog(`insertIterationSelectHeader()`); 
             let iterationSelectSectionHeader = document.createElement('h2');
             iterationSelectSectionHeader.innerHTML = 'Select iteration path for printing';
             let iterationSelectDiv = document.getElementById('iterations');
             iterationSelectDiv.insertBefore(iterationSelectSectionHeader,iterationSelectDiv.childNodes[0]);
         }
         function displayPrint() {
+            consoleLog(`displayPrint()`); 
             document.getElementById('print').style.display = 'inline';
         }
         function consoleLog(msg) {
             console.log(`${consoleMessageCount}: ${msg}`);
             consoleMessageCount++;
         }
-        VSS.register('backlogTabObject', {
-            pageTitle: function(state) {
-                return false;
-            },
-            updateContext: function(tabContext) {                            
-            },
-            isInvisible: function(state) {
-                return false;
-            },
-            isDisabled: function(state) {
-                return false;
-            }
-        });
-        VSS.notifyLoadSucceeded();
     </script>
     <script type="text/javascript" src="js/clamp.js"></script>
     <link rel="stylesheet" media="print" href="css/print.css">
@@ -595,6 +726,11 @@
                 <ul id="cardSize">
 
                 </ul>
+            </div>
+            <div id="fieldOptions" class="no-print">
+                <div id="fields">
+
+                </div>
             </div>
         </div>
         <div id="contact" class="no-print">
