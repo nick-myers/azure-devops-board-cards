@@ -52,7 +52,7 @@ Note - these screenshots do not show the parent work item details (ID and title)
 ## How to build the package
 
 Windows Powershell 
-tfx extension create --manifest-globs vss-extension-dev.json --rev-version
+```tfx extension create --manifest-globs vss-extension-dev.json --rev-version```
 
 remove the -dev extension in order to build a package for production
 
