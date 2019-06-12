@@ -1,0 +1,33 @@
+{
+  "name": "board-cards",
+  "version": "1.0.0",
+  "description": "Board cards for printing",
+  "main": "board-cards.html",
+  "dependencies": {
+    "azure-devops-node-api": "^7.0.0",
+    "vss-web-extension-sdk": "^5.141.0"
+  },
+  "devDependencies": {
+    "eslint-plugin-html": "^5.0.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nick-myers/azure-devops-board-cards.git"
+  },
+  "keywords": [
+    "azure",
+    "devops",
+    "extension",
+    "board",
+    "cards"
+  ],
+  "author": "Nick Myers (myers.nick@gmail.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nick-myers/azure-devops-board-cards/issues"
+  },
+  "homepage": "https://github.com/nick-myers/azure-devops-board-cards#readme"
+}

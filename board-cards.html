@@ -28,7 +28,7 @@
             });
             consoleLog(`Checking whether document is ready`);
             checkReady();
-        });
+        }); 
         VSS.notifyLoadSucceeded();
         function checkReady() {
             consoleLog(`checkReady()`);
@@ -65,13 +65,14 @@
                             consoleLog(`Error: ${err}`);
                             await removeLoader();
                             await displayPrint();
-                            alert(`An error occurred. This happens when there are no work items of the types selected returned in the query.  The error reported by the server was ${err}`);
+                            alert(`An error occurred. The error reported was: ${err}`);
                         }
                     }
                 });
             };
         }
         let consoleMessageCount = 1;
+        let parentCount = 0;
         async function getUserFields() {
             consoleLog(`getUserFields()`)
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
@@ -79,38 +80,37 @@
             if(userSelectedFields) {
                 if(userSelectedFields === '') {
                     const userFields = await setInitialUserFields();
+                    consoleLog(`Blank value found.  Initialisation completed. Contents of userFields is now...`)
+                    console.dir(userFields);
                     return userFields;
                 } else {
+                    consoleLog(`Contents of userFields is...`)
+                    console.dir(userSelectedFields);
                     return userSelectedFields;
                 }
             } else {
                 const userFields = await setInitialUserFields();
+                consoleLog(`userSelectedFields did not exist. Initialisation completed. Contents of userFields is now...`)
+                console.dir(userFields);
                 return userFields;
             }
+        }
+        function Field(name,selected){
+            this.name = name;
+            this.selected = selected;
         }
         async function setInitialUserFields() {
             consoleLog(`setInitialUserFields()`)
             const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
-            const initialFieldsJson = 
-            `
-            {
-                "fields": [
-                    { 
-                        "name": "Original estimate",
-                        "selected": false
-                    },
-                    {
-                        "name": "Assigned to",
-                        "selected": false
-                    }
-                ]
-            }
-            `
-            await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"});
-            if(await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"})) {
-                let userFields = await dataService.setValue("userFields", initialFieldsJson, {scopeType: "User"});
-                consoleLog(`User fields have been initialised`);
-                consoleLog(`Contents of user fields after initiatlisation is:`);
+            let fieldsArray = new Array();
+            let fieldObject1 = new Field('Original estimate',false);
+            fieldsArray.push(fieldObject1);
+            let fieldObject2 = new Field('Assigned to',false);
+            fieldsArray.push(fieldObject2);
+            await dataService.setValue("userFields", fieldsArray, {scopeType: "User"});
+            if(await dataService.setValue("userFields", fieldsArray, {scopeType: "User"})) {
+                let userFields = await dataService.setValue("userFields", fieldsArray, {scopeType: "User"});
+                consoleLog(`userFields after setInitialUserFields() is:`)
                 console.dir(userFields)
                 return userFields;
             } else {
@@ -124,18 +124,67 @@
             fieldsSectionHeader.innerHTML = 'Select additional fields to include';
             let fieldsSectionDiv = document.getElementById('fieldOptions');
             fieldsSectionDiv.insertBefore(fieldsSectionHeader,fieldsSectionDiv.childNodes[0]);
-            const userFields = await getUserFields();
+            let userFields = await getUserFields();
+            const userFieldsLength = Object.keys(userFields).length;
             if(userFields) {
-                consoleLog(`User has fields to display`);
-                const numberOfUserFields = userFields.length;
-                consoleLog(numberOfUserFields);
-                for(let x = 0; x < numberOfUserFields; x++) {
-                    
+                consoleLog(`User has fields to display: ${userFieldsLength}`);
+                if(userFieldsLength == 1) {
+                    consoleLog(`User has one field selected`);
+                    let name = userFields[0].name;
+                    let fieldsArray = new Array();
+                    if(name === 'Original estimate') {
+                        consoleLog(`User has selected 'Original estimate'`);
+                        let fieldObject1 = new Field('Original estimate',true);
+                        fieldsArray.push(fieldObject1);
+                        let fieldObject2 = new Field('Assigned to',false);
+                        fieldsArray.push(fieldObject2);
+                    } else if (name === 'Assigned to') {
+                        consoleLog(`User has selected 'Assigned to'`);
+                        let fieldObject1 = new Field('Original estimate',false);
+                        fieldsArray.push(fieldObject1);
+                        let fieldObject2 = new Field('Assigned to',true);
+                        fieldsArray.push(fieldObject2);
+                    } else {
+                        consoleLog(`User has an unknown field selected`);
+                    }
+                    consoleLog(`After adding the missing field, fieldsArray is now:`);
+                    console.dir(fieldsArray);
+                    const fieldsArrayLength = Object.keys(fieldsArray).length;
+                    consoleLog(`fieldsArrayLength: ${fieldsArrayLength}`);
+                    await createFieldInputs(fieldsArray,fieldsArrayLength);
+                } else {
+                    consoleLog(`userFields prior to entering for loop is:`);
+                    console.dir(userFields);
+                    await createFieldInputs(userFields,userFieldsLength);
                 }
+                await addUpdateFieldsButton();
             } else {
-                consoleLog(`userFields is not set`);
+                consoleLog(`userFields is not set`); 
             }
-            
+        }
+        async function createFieldInputs(userFields,userFieldsLength) {
+            for(let x = 0; x < userFieldsLength; x++) {
+                let name = userFields[x].name;
+                let selected = userFields[x].selected;
+                let input = document.createElement('input');
+                input.setAttribute('type','checkbox');
+                input.setAttribute('name', name);
+                input.setAttribute('value',name);
+                if(selected === true) {
+                    input.setAttribute('selected',true);
+                    input.setAttribute('checked','checked');
+                } else if (selected === false) {
+                    input.setAttribute('selected',false);
+                }
+                input.setAttribute('class','field-input');
+                let label = document.createElement('label');
+                label.setAttribute('for',name);
+                label.innerHTML = ' ' + name;
+                let linebreak = document.createElement('br');
+                document.getElementById('fields').appendChild(input);
+                document.getElementById('fields').appendChild(label);
+                document.getElementById('fields').appendChild(linebreak);
+            }
         }
         async function getCardSize() {
             consoleLog(`getCardSize()`);
@@ -269,9 +318,71 @@
                     return false;
             };
         }
+        async function saveFields(){
+            consoleLog(`saveFields()`);
+            const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
+            let selectedFields = await getSelectedFields();
+            if(selectedFields) {
+                let selectedFieldsLength = selectedFields.length;
+                consoleLog(`selectedFieldsLength: ${selectedFieldsLength}`);
+                let fieldsArray = new Array();
+                selectedFields.forEach(function(item) {
+                    consoleLog(`selectedField: ${item}`);
+                    let fieldObject = new Field(item,true);
+                    fieldsArray.push(fieldObject);
+                });
+                consoleLog(`Setting userFields`);
+                await dataService.setValue("userFields", fieldsArray, {scopeType: "User"});
+                if(await dataService.getValue("userFields", {scopeType: "User"})) {
+                    let savedUserFields = await dataService.getValue("userFields", {scopeType: "User"});
+                    if(savedUserFields){
+                        consoleLog(`User's saved userFields now set to:`);
+                        console.dir(savedUserFields);
+                        location.reload(true);
+                        return true;
+                    } else {
+                        console.log(`userFields does not exist`)
+                    }
+                } else {
+                    consoleLog(`User has not selected any fields to include.`);
+                    return false;
+                };
+            } else {
+                    consoleLog(`User has not selected any fields to include.`);
+                    return false;
+            };
+        }
+        async function getSelectedFields() {
+            consoleLog(`getSelectedFields()`);
+            const inputs = document.getElementsByClassName('field-input');
+            let inputsArray = [];
+            const inputsLength = inputs.length;
+            if(inputsLength && inputsLength > 0){
+                for (let x = 0; x < inputsLength; x++) {
+                    if(inputs[x].checked) {
+                        inputsArray.push(inputs[x].value);
+                        consoleLog(`Pushing: ${inputs[x].value}`);
+                    } else {
+                        consoleLog(`Not pushing ${inputs[x].value}`);
+                    }
+                }
+                let inputsArrayLength = inputsArray.length;
+                if(inputsArrayLength > 0){
+                    return inputsArray;
+                } else {
+                    await setInitialUserFields();
+                    consoleLog(`User didn't select any fields, so setInitialUserFields()`);
+                    location.reload(true);
+                    return false;
+                }
+            } else {
+                alert('Could not find any fields that can be included.');
+                return false;
+            }
+        }
         async function getSelectedWorkItemTypes() {
             consoleLog(`getSelectedWorkItemTypes()`);
-            const inputs = document.getElementsByTagName('input');
+            const inputs = document.getElementsByClassName('input-work-item-type');
             let inputsArray = [];
             const inputsLength = inputs.length;
             if(inputsLength && inputsLength > 0){
@@ -347,6 +458,7 @@
                 } else {
                     input.setAttribute('checked','checked'); // Default is the user hasn't got saved types
                 }
+                input.setAttribute('class','input-work-item-type');
                 let label = document.createElement('label');
                 label.setAttribute('for',name);
                 label.innerHTML = ' ' + name;
@@ -358,6 +470,16 @@
             await addUpdateButton();
             return true;
         }
+        async function addUpdateFieldsButton() {
+            consoleLog(`addUpdateFieldsButton()`);
+            let div = document.getElementById('fields');
+            let button = document.createElement('button');
+            button.setAttribute('type','button');
+            button.innerHTML = 'Update selected fields';
+            button.id = 'updateFieldsButton';
+            button.addEventListener ("click", function () { saveFields(); return false;});
+            div.appendChild(button);
+        } 
         async function addUpdateButton() {
             consoleLog(`addUpdateButton()`);
             let div = document.getElementById('workItemTypes');
@@ -471,7 +593,6 @@
             window.print();
         }
         async function getParent(witClient,workItemDetails,id,x) {   
-            consoleLog(`getParent()`); 
             if (workItemDetails[x].relations) { 
                 try {
                     const { url }  =  await workItemDetails[x].relations.find(({ rel }) => rel ===  'System.LinkTypes.Hierarchy-Reverse');
@@ -481,8 +602,9 @@
                         const parentWorkItemTitleString = workItemDetails.fields['System.Title'];
                         let div = document.createElement('div');
                         div.setAttribute('class','parent');
-                        div.innerHTML = `<span class="parent-id">${parentId}</span><span class="parent-name">${parentWorkItemTitleString}</span>`;
+                        div.innerHTML = `<span class="parent-id">${parentId}</span><span id="parent-${parentId}" class="parent-name">${parentWorkItemTitleString}</span>`;
                         document.getElementById(id).appendChild(div);
+                        parentCount++;
                         return true;
                     } else {
                         consoleLog('An error occurred.');
@@ -499,15 +621,26 @@
         }
         function removeLoader() {
             consoleLog(`removeLoader()`); 
-            document.getElementById('loader').style.display = 'none';
+            const loaderExists = document.getElementById('loader');
+            if(loaderExists) {
+                consoleLog(`loaderExists`);
+                loaderExists.style.display = 'none';
+                //document.getElementById('loader').parentNode.removeChild('loader');
+            }
         }
         function displayMain() {
-            consoleLog(`displayMain()`); 
-            document.getElementById('main').style.display = 'inline';
+            consoleLog(`displayMain()`);
+            const mainExists = document.getElementById('main');
+            if(mainExists){
+                if(mainExists.getAttribute('style')){
+                    document.getElementById('main').style.display = 'inline';
+                }
+            }
         }
         async function displayWorkItems(witClient,contracts,workClient,projectId,teamContext,iteration,projectName,areaPath,selectedCardSize) {
             consoleLog(`displayWorkItems()`); 
             let sheetCount = 0;
+            consoleLog(`sheetCount is: ${sheetCount}`);
             let iterationChunk = '';
             let queryString = 'SELECT [System.Id] FROM WorkItems WHERE ';
             if(iteration != '@CurrentIteration') {
@@ -515,7 +648,9 @@
             } else {
                 iterationChunk = `[System.IterationPath] = ${iteration} `;
             }
+            consoleLog(`iterationChunk is: ${iterationChunk}`)
             queryString = queryString + iterationChunk;
+            consoleLog(`queryString is: ${queryString}`)
             const userHasSavedWorkItemsTypes = await checkForSavedWorkItemTypes();
             if(userHasSavedWorkItemsTypes){
                 consoleLog(`User has saved work item types`);
@@ -535,27 +670,31 @@
                     }
                 }
                 queryString = queryString + workItemChunk;
-            } 
+                consoleLog(`After adding saved work item types queryString is: ${queryString}`)
+            } else {
+                consoleLog(`User does not have any saved work item types`)
+            }
             if(areaPath) {
                 consoleLog(`areaPath: ${areaPath}`);
                 const areaPathQueryString = ` AND [System.AreaPath] = '${areaPath}'`;
                 queryString = queryString + areaPathQueryString;
+                consoleLog(`After adding the Area Path queryString is: ${queryString}`);
+            } else {
+                consoleLog(`User does not have a saved Area Path`)
             }
             let query = { 'query' : `${queryString}`}
             const workItemIds = await getWorkItemIds(witClient,query,projectId);
             const workItemDetails = await getWorkItemDetails(witClient,workItemIds,contracts);
-            
             const numberOfWorkItems = workItemIds.length;
+            consoleLog(`numberOfWorkItems is: ${numberOfWorkItems}`)
             let divideAfter = 0;
+            consoleLog(`selectedCardSize is: ${selectedCardSize}`)
             if(selectedCardSize === 'small'){
                 divideAfter = 15;
             } else if (selectedCardSize === 'large') {
                 divideAfter = 6;
             }
             for(let x = 0; x < numberOfWorkItems; x++) {
-                if(x === 1) {
-                    console.dir(workItemDetails[1]);
-                }
                 let id = workItemDetails[x].id;
                 let type = workItemDetails[x].fields['System.WorkItemType'];
                 let title = workItemDetails[x].fields['System.Title'];
@@ -567,13 +706,9 @@
                 if(workItemDetails[x].fields['System.AssignedTo']) {
                     assignedTo = workItemDetails[x].fields['System.AssignedTo'].displayName;
                 }
-                if(originalEstimate) {
-                    let yes = 'yes';
-                }
-                if(assignedTo) {
-                    let yes = 'yes';
-                }
+                
                 let styleType = type.replace(/\s+/g, '-').toLowerCase();
+                consoleLog(`styleType is: ${styleType}`);
                 if(x === 0) {
                     let section = document.createElement('div');
                     section.className = 'sheet padding-10mm';
@@ -583,6 +718,7 @@
                 } 
                 let div = document.createElement('div');
                 let className = 'workItem ' + styleType + ' ' + id + ' ' + x + ' ' + selectedCardSize;
+                consoleLog(`className is: ${className}`);
                 div.className = className;
                 div.setAttribute('id', id);
                 const stringParts = [];
@@ -605,16 +741,33 @@
                 let titleClass = `${title}-${id}`;
                 let titleElement = document.getElementById(`${titleClass}`);
                 if(selectedCardSize === 'small'){
-                    $clamp(titleElement, {clamp: 5})
+                    //$clamp(titleElement, {clamp: 4})
                 } else if (selectedCardSize === 'large') {
-                    $clamp(titleElement, {clamp: 4})
+                    //$clamp(titleElement, {clamp: 4})
                 }
                 await getParent(witClient,workItemDetails,id,x);
+                if(assignedTo) {
+                    let div = document.createElement('div');
+                    let className = 'assigned';
+                    div.className = className;
+                    div.setAttribute('id', id)
+                    div.insertAdjacentHTML('beforeend', assignedTo);
+                    document.getElementById(id).appendChild(div)
+                }
+                if(originalEstimate) {
+                    let div = document.createElement('div');
+                    let className = 'estimate';
+                    div.className = className;
+                    div.setAttribute('id', id)
+                    div.insertAdjacentHTML('beforeend', originalEstimate);
+                    document.getElementById(id).appendChild(div)
+                }
             }
+            consoleLog(`${parentCount} parents fetched`);
             appendCountOfWorkItems(numberOfWorkItems);
-            removeLoader();
             displayPrint();
             displayMain();
+            removeLoader();
             triggerPrint();
             return true;
         }
@@ -682,7 +835,12 @@
         }
         function displayPrint() {
             consoleLog(`displayPrint()`); 
-            document.getElementById('print').style.display = 'inline';
+            const printExists = document.getElementById('print');
+            if(printExists){
+                if(printExists.getAttribute('style')){
+                    document.getElementById('print').style.display = 'inline';
+                }
+            }
         }
         function consoleLog(msg) {
             console.log(`${consoleMessageCount}: ${msg}`);
