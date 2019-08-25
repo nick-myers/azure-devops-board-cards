@@ -293,6 +293,7 @@
             try {
                 let queryResult = await witClient.queryByWiql(query, projectId);
                 let workItemsIdsInResult = await queryResult.workItems.map(function (wi) { return wi.id; });
+                log(`getWorkItemIds has found: ${workItemsIdsInResult}`)
                 return workItemsIdsInResult;
             } catch(err) {
                 consoleLog(`Error: ${err}`);
