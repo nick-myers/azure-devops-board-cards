@@ -38,7 +38,7 @@
             } else if (document.readyState === 'complete') {
                 consoleLog(`Document readyState = complete`);
                 consoleLog(`Requiring VSS and TFS clients`);
-                VSS.require(["VSS/Service","TFS/WorkItemTracking/RestClient","TFS/WorkItemTracking/Contracts","TFS/Work/RestClient"], 
+                VSS.require(["VSS/Service","TFS/WorkItemTracking/RestClient","TFS/WorkItemTracking/Contracts","TFS/Work/RestClient",], 
                 async function (VSS_Service, TFS_Wit_WebApi,TFS_Contracts,TFS_WorkClient) {
                     consoleLog(`Main function started`)
                     if (document.readyState === 'complete') {
@@ -288,16 +288,22 @@
             workItemSelectSectionHeader.innerHTML = newContent;
             return true;
         }
-        async function getWorkItemIds(witClient,query,projectId) {
+        async function getWorkItemIds(witClient,query,projectId,contracts) {
             consoleLog(`getWorkItemIds()`);
+            let workItemIds = [];
             try {
-                let queryResult = await witClient.queryByWiql(query, projectId);
-                let workItemsIdsInResult = await queryResult.workItems.map(function (wi) { return wi.id; });
-                log(`getWorkItemIds has found: ${workItemsIdsInResult}`)
-                return workItemsIdsInResult;
+                await witClient.queryByWiql(query, projectId).then(
+                    function(result) {
+                        if (result.queryType == contracts.QueryType.Flat) {
+                            workItemIds = result.workItems.map(val => val.id).slice(0, Math.min(200, result.workItems.length));
+                            consoleLog(`getWorkItemIds has found: ${workItemIds}`)
+					    }
+                    }
+                );               
             } catch(err) {
                 consoleLog(`Error: ${err}`);
             }
+            return workItemIds;
         }
         async function saveWorkItemTypes(){
             consoleLog(`saveWorkItemTypes()`);
@@ -493,8 +499,15 @@
         } 
         async function getWorkItemDetails(witClient,workItemIds,contracts){
             consoleLog(`getWorkItemDetails()`);
-            const workItemDetails = await witClient.getWorkItems(workItemIds,null,null,contracts.WorkItemExpand.Relations);
-            return workItemDetails;
+            if(workItemIds != '') {
+                const workItemDetails = await witClient.getWorkItems(workItemIds,null,null,contracts.WorkItemExpand.Relations);
+                consoleLog(`Work Item Details: ${workItemDetails}`)
+                return workItemDetails;
+            } else {
+                consoleLog('No work items Ids were passed')
+                return false;
+            }
+            
         }
         async function reset() {
             consoleLog(`reset()`);
@@ -579,8 +592,9 @@
             } else {
                 const dataService = await VSS.getService(VSS.ServiceIds.ExtensionData);
                 let usersSavedAreaPath = await dataService.getValue("userAreaPath", {scopeType: "User"});
-                if(userHasSavedAreaPath === false || usersSavedAreaPath === '') {
+                if(userHasSavedAreaPath === false || usersSavedAreaPath === '' || usersSavedAreaPath === undefined) {
                     //consoleLog('User does not have a saved area path')
+                    consoleLog(`User does not have a saved area path. A 404 is expected when userAreaPath is requested`)
                     return false;
                 } else {
                     consoleLog(`Users saved area path is ${usersSavedAreaPath}`);
@@ -684,7 +698,8 @@
                 consoleLog(`User does not have a saved Area Path`)
             }
             let query = { 'query' : `${queryString}`}
-            const workItemIds = await getWorkItemIds(witClient,query,projectId);
+            const workItemIds = await getWorkItemIds(witClient,query,projectId,contracts);
+            consoleLog(`Passing workItemIds: ${workItemIds} to getWorkItemDetails()`)
             const workItemDetails = await getWorkItemDetails(witClient,workItemIds,contracts);
             const numberOfWorkItems = workItemIds.length;
             consoleLog(`numberOfWorkItems is: ${numberOfWorkItems}`)
@@ -769,7 +784,12 @@
             displayPrint();
             displayMain();
             removeLoader();
-            triggerPrint();
+            if(numberOfWorkItems >= 1) {
+                triggerPrint();
+            } else {
+                alert(`No work items were returned, please check the options selected and that work items are assigend to the iteration`);
+            }
+            
             return true;
         }
         function setPrintHeader(iteration,areaPath) {

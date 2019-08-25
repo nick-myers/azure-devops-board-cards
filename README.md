@@ -9,6 +9,14 @@ I'm not a professional web developer, I'm a delivery manager who works with soft
 
 This is very much a side project; I think it's useful enough to make available for others to use.  
 
+## Minor version update - version 3.11 released 25th August 2019
+
+This version includes:
+
+* Improvements to reduce occurence of 400 errors when getting work item details
+* Handling when no work items are assigned to iterations
+* Improvements to how work items are retrieved for specific iterations
+
 ## Major version update - version 3.0 released on 30th April 2019
 
 This version includes the ability to select "small" or "large" cards for printing.
