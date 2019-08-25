@@ -9,11 +9,6 @@ I'm not a professional web developer, I'm a delivery manager who works with soft
 
 This is very much a side project; I think it's useful enough to make available for others to use.  
 
-## Minor version update - version 3.8 released 12th June 2019
-
-* Includes 'Assignee' and 'Original Estimate' fields on cards
-* Bug fix: removed use of clamp.js for line truncation (which was throwing an error).
-
 ## Major version update - version 3.0 released on 30th April 2019
 
 This version includes the ability to select "small" or "large" cards for printing.
@@ -56,8 +51,9 @@ Note - these screenshots do not show the parent work item details (ID and title)
 
 ## How to build the package
 
-Windows Powershell 
-```tfx extension create --manifest-globs vss-extension-dev.json --rev-version```
+### Windows Powershell 
+```npm install -g tfx-cli
+tfx extension create --manifest-globs vss-extension-dev.json --rev-version```
 
 remove the -dev extension in order to build a package for production
 
