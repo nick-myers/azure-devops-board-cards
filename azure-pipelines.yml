@@ -1,4 +1,5 @@
 # Node.js
+
 # Build a general Node.js project with npm.
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
@@ -21,3 +22,9 @@ steps:
 - task: TfxInstaller@2
   inputs:
     version: 'v0.6.x'
+
+- task: PackageAzureDevOpsExtension@2
+  inputs:
+    rootFolder: $(Build.Repository.LocalPath)
+    patternManifest: 'vss-extension-dev.json'
+    updateTasksVersion: false
