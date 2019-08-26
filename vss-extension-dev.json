@@ -37,7 +37,8 @@
             "type": "ms.vss-web.tab",
             "description": "Print (DEV)",
             "targets": [
-                "ms.vss-work-web.iteration-backlog-tabs"
+                "ms.vss-work-web.iteration-backlog-tabs",
+                "ms.vss-work-web.product-backlog-tabs"
             ],
             "properties": {
                 "text": "Print (DEV)",
