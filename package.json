@@ -4,7 +4,7 @@
   "description": "Board cards for printing",
   "main": "board-cards.html",
   "dependencies": {
-    "azure-devops-node-api": "^7.0.0",
+    "azure-devops-node-api": "^12.0.0",
     "vss-web-extension-sdk": "^5.141.0"
   },
   "devDependencies": {
